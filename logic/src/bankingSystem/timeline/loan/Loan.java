@@ -20,6 +20,11 @@ public class Loan implements LoanInterface {
     private LoanStatus m_LoanStatus;
     private int m_PendingMoney = 0; // raised money before activation
     private int m_BeginningTimeUnit;
+
+    public int getLastPaidTimeUnit() {
+        return m_LastPaidTimeUnit;
+    }
+
     private int m_LastPaidTimeUnit = 0;
     private final String f_LoanCategory;
 
@@ -76,7 +81,7 @@ public class Loan implements LoanInterface {
         return m_Payment.paidInterestAmount();
     }
 
-    public double interestLoanToPay() {
+    public double interestLoanToPayAmount() {
         return m_Payment.getInitialInterest();
     }
 
@@ -169,5 +174,9 @@ public class Loan implements LoanInterface {
             i_PartInLoan.getLender().addMoneyToAccount(m_Payment.getSumToPayEveryTimeUnit());
         }
         // TODO: in stream
+    }
+
+    public double sumAmountToPayEveryTimeUnit() {
+        return m_Payment.getSumToPayEveryTimeUnit();
     }
 }

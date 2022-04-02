@@ -1,5 +1,7 @@
 package consoleUI;
 
+import DTO.client.ClientInformationDTO;
+import DTO.client.RecentTransactionDTO;
 import DTO.loan.LoanInformationDTO;
 import DTO.loan.PartInLoanDTO;
 import bankingSystem.BankingSystem;
@@ -116,32 +118,154 @@ public class ConsoleStart {
     private void withdrawMoney() {
     }
 
-    private void addMoney() {
+    private void addMoney() throws Exception {
+        Set<ClientInformationDTO> clientInfoList = m_Engine.showClientsInformation();
+        int counter = 0;
+        System.out.println("Please choose the account you would like to add money to(enter full name): ");
+        for (ClientInformationDTO clientDTO: clientInfoList) {
+            System.out.println(counter++ + ")" + clientDTO.getClientName());
+        }
+        String userAccountInputString;
+        int userAccountInput, userAmountOfMoneyInput;
+        Scanner scanUserInput = new Scanner(System.in);
+        userAccountInputString = scanUserInput.next();
+
+        System.out.println("Please enter the amount of money you would like to add to the chosen account: ");
+        userAmountOfMoneyInput = scanUserInput.nextInt();
+
+        m_Engine.addMoneyToAccount(userAccountInputString, userAmountOfMoneyInput);
     }
 
     private void showClientsInformation() {
-        m_Engine.showClientsInformation();
+        Set<ClientInformationDTO> clientInfo = m_Engine.showClientsInformation();
+
+        for (ClientInformationDTO clientDTO : clientInfo) {
+            printClientInformation(clientDTO);
+        }
+    }
+
+    private void printClientInformation(ClientInformationDTO singleClientInformation) {
+        String stringToPrint = "Client Information:\n";
+        stringToPrint += "Client name: " + singleClientInformation.getClientName();
+        int counter = 0;
+
+        // recent transactions:
+        stringToPrint+= "Last Transactions:\n";
+        Set<RecentTransactionDTO> recentTransactionList = singleClientInformation.getRecentTransactionList();
+        for (RecentTransactionDTO singleTransaction : recentTransactionList) {
+            stringToPrint += counter++ + ")";
+            stringToPrint += clientsRecentTransactionString(singleTransaction);
+        }
+
+        counter = 0;
+
+        // loans as borrower info
+        stringToPrint+= "Client loan as Borrower:\n";
+        for (LoanInformationDTO loanAsBorrower : singleClientInformation.getClientAsBorrowerLoanList()) {
+            stringToPrint += counter++ + ")";
+            stringToPrint += clientLoansInformationString(loanAsBorrower);
+        }
+
+        counter = 0;
+
+        //loans as lender info
+        stringToPrint+= "Client loan as Lender:\n";
+        for (LoanInformationDTO loanAsBorrower : singleClientInformation.getClientAsBorrowerLoanList()) {
+            stringToPrint += counter++ + ")";
+            stringToPrint += clientLoansInformationString(loanAsBorrower);
+        }
+
+        System.out.println(stringToPrint);
+    }
+
+    private String clientsRecentTransactionString(RecentTransactionDTO singleTransaction) {
+        String stringToReturn = "Transaction Information: ";
+        stringToReturn += "Transaction Timeunit: " + singleTransaction.getTransactionTimeUnit() + "\n" +
+                "Transaction Amount: " +singleTransaction.getAmountOfTransaction() + "\n" +
+                "Kind Of Transaction: " + singleTransaction.getKindOfTransaction() + "\n" +
+                "Account Balance Before Transaction: " + singleTransaction.getBalanceBeforeTransaction() + "\n" +
+                "Account Balance After Transaction: " + singleTransaction.getBalanceAfterTransaction() + "\n";
+
+        return stringToReturn;
+    }
+
+    private String clientLoansInformationString(LoanInformationDTO loan) {
+        String stringToPrint = "Loan Information:\n";
+        stringToPrint +=
+                "Loan ID: " + loan.getLoanNameID() + "\n" +
+                        "Loan Category: " + loan.getLoanCategory() + "\n" +
+                        "Loan Initial Amount: " + loan.getLoanStartSum() + "\n" +
+                        "TimeUnits Between Payments: " + loan.getTimeUnitsBetweenPayments() + "\n" +
+                        "Loan Interest: " + loan.getLoanInterest() + "\n" +
+                        "Loan Final Amount(Fund + Interest): " + loan.getSumAmount() + "\n" +
+                        "Loan Status: " + loan.getLoanStatus();
+        stringToPrint += clientLoanStatusInformation(loan.getLoanStatus(), loan);
+
+        return stringToPrint;
+    }
+
+    private String clientLoanStatusInformation(String loanStatus, LoanInformationDTO singleLoanInformation) {
+        String stringToReturn = "";
+        switch (loanStatus) {
+            case "NEW":
+                break;
+            case "PENDING":
+                stringToReturn += clientLoanPendingStatus(singleLoanInformation);
+                break;
+            case "ACTIVE":
+                stringToReturn += clientLoanActiveStatus(singleLoanInformation);
+                break;
+            case "RISK":
+                stringToReturn += clientLoanRiskStatus(singleLoanInformation);
+                break;
+            case "FINISHED":
+                stringToReturn += clientLoanFinishedStatus(singleLoanInformation);
+                break;
+        }
+
+        return stringToReturn;
+    }
+
+    private String clientLoanFinishedStatus(LoanInformationDTO singleLoanInformation) {
+        return "Beginning Timeunit: " + singleLoanInformation.getBeginningTimeUnit() +"\n" +
+                "Ending Timeunit: " +singleLoanInformation.getEndingTimeUnit() +"\n";
+    }
+
+    private String clientLoanRiskStatus(LoanInformationDTO singleLoanInformation) {
+        String stringToReturn = "";
+        //Todo: complete
+        return stringToReturn;
+    }
+
+    private String clientLoanActiveStatus(LoanInformationDTO singleLoanInformation) {
+        return "Next Payment Timeunit: " + singleLoanInformation.getNextPaymentTimeUnit() + "\n" +
+                "Next Payment Amount: " + singleLoanInformation.getSumAmountToPayEveryTimeUnit() + "\n";
+    }
+
+    private String clientLoanPendingStatus(LoanInformationDTO singleLoanInformation) {
+        return "Remaining loan amount to activate: " + (singleLoanInformation.getFundAmount() - singleLoanInformation.getPendingMoney()) + "\n";
     }
 
     private void showLoansInformation() {
-        Set<LoanInformationDTO> loanInfo = m_Engine.showLoansInformation();
-        for (LoanInformationDTO loanDTO : loanInfo) {
-            printLoansInformation();
+        Set<LoanInformationDTO> loanInfoList = m_Engine.showLoansInformation();
+
+        for (LoanInformationDTO loanDTO : loanInfoList) {
+            printLoanInformation(loanDTO);
         }
     }
 
-    private void printLoansInformation() {
-        Set<LoanInformationDTO> loansInformationList = m_Engine.showLoansInformation();
+    private void printLoanInformation(LoanInformationDTO singleLoanInformation) {
         String stringToPrint = "Loan Information:\n";
-
-        for (LoanInformationDTO singleLoanInformation:loansInformationList) {
-            stringToPrint +=
-                    "Loan ID: " + singleLoanInformation.getLoanNameID() +
-                     "Loan Owner: " + singleLoanInformation.getBorrowerName() +
-                    "Loan Category: " + singleLoanInformation.getLoanCategory() +
-                    "Loan Status: " + singleLoanInformation.getLoanStatus();
-            stringToPrint += printByLoanStatus(singleLoanInformation.getLoanStatus(), singleLoanInformation);
-        }
+        stringToPrint +=
+                    "Loan ID: " + singleLoanInformation.getLoanNameID() + "\n" +
+                     "Loan Owner: " + singleLoanInformation.getBorrowerName() + "\n" +
+                    "Loan Category: " + singleLoanInformation.getLoanCategory() + "\n" +
+                    "Loan Status: " + singleLoanInformation.getLoanStatus() + "\n" +
+                     "Loan Sum: " + singleLoanInformation.getLoanStartSum() + "\n" +
+                     "Loan Time Duration: " + singleLoanInformation.getLoanSumOfTimeUnit() + "\n" +
+                     "Loan Interest: " + singleLoanInformation.getLoanInterest() + "\n" +
+                     "Timeunits between payments: " + singleLoanInformation.getTimeUnitsBetweenPayments();
+        stringToPrint += printByLoanStatus(singleLoanInformation.getLoanStatus(), singleLoanInformation);
 
         System.out.println(stringToPrint);
     }

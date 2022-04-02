@@ -26,6 +26,8 @@ public class LoanInformationDTO {
     private double paidInterest;
     private double fundLeftToPay;
     private double interestLeftToPay;
+    private int nextPaymentTimeUnit;
+    private double sumAmountToPayEveryTimeUnit;
 
     public LoanInformationDTO(Loan loan) {
         loanNameID = loan.getLoanNameID();
@@ -40,13 +42,15 @@ public class LoanInformationDTO {
         beginningTimeUnit = loan.getBeginningTimeUnit();
         endingTimeUnit = beginningTimeUnit + loanSumOfTimeUnit - 1; //TODO: check if right
         fundAmount = loan.getLoanStartSum();
-        interestAmount = loan.interestLoanToPay();
+        interestAmount = loan.interestLoanToPayAmount();
         sumAmount = fundAmount + interestAmount;
         paidFund = loan.loanPaidFund();
         paidInterest = loan.loanPaidInterest();
         fundLeftToPay = loan.loanFundLeftToPay();
         interestLeftToPay = loan.loanInterestLeftToPay();
         pendingMoney = loan.getPendingMoney();
+        nextPaymentTimeUnit = loan.getLastPaidTimeUnit() + timeUnitsBetweenPayments; //Todo: check if correct
+        sumAmountToPayEveryTimeUnit = loan.sumAmountToPayEveryTimeUnit();
     }
 
     private Set<PartInLoanDTO> lenderSetAndAmountInDTO(Set<PartInLoan> i_LenderSetAndAmount) {
@@ -134,4 +138,13 @@ public class LoanInformationDTO {
     public double getInterestLeftToPay() {
         return interestLeftToPay;
     }
+
+    public int getNextPaymentTimeUnit() {
+        return nextPaymentTimeUnit;
+    }
+
+    public double getSumAmountToPayEveryTimeUnit() {
+        return sumAmountToPayEveryTimeUnit;
+    }
+
 }

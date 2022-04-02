@@ -23,8 +23,6 @@ public class BankingSystem implements LogicInterface{
         m_LoanCategoryList = new HashSet<>();
     }
 
-
-
     @Override
     public void addBankClient(int i_AccountBalance, String i_ClientName) throws Exception {
         BankAccount account = null;
@@ -61,6 +59,10 @@ public class BankingSystem implements LogicInterface{
     @Override
     public void promoteTimeline() {
         m_CurrentTimeUnit.addOneToTimeUnit();
+
+        for (Loan i_Loan : m_LoanList) {
+            i_Loan.checkIfPaymentNeededAndPay(m_CurrentTimeUnit.getCurrentTimeUnit());
+        }
     }
 
     @Override

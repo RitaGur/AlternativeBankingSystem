@@ -42,4 +42,20 @@ public class ClientInformationDTO {
 
         return setToReturn;
     }
+
+    public String getClientName() {
+        return clientName;
+    }
+
+    public Set<RecentTransactionDTO> getRecentTransactionList() {
+        return recentTransactionList;
+    }
+
+    public Set<LoanInformationDTO> getClientAsBorrowerLoanList() {
+        return clientAsBorrowerLoanList;
+    }
+
+    public Set<LoanInformationDTO> getClientAsLenderLoanList() {
+        return clientAsLenderLoanList;
+    }
 }
