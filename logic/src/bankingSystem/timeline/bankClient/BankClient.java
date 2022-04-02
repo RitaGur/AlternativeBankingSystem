@@ -66,5 +66,11 @@ public class BankClient implements BankAccount {
         return f_ClientName;
     }
 
+    public Set<Loan> getClientAsLenderSet() {
+        return m_ClientAsLenderSet;
+    }
 
+    public Set<Loan> getClientAsBorrowerSet() {
+        return m_ClientAsBorrowerSet;
+    }
 }

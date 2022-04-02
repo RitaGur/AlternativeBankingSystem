@@ -1,5 +1,6 @@
 package bankingSystem;
 
+import DTO.client.ClientInformationDTO;
 import DTO.loan.LoanInformationDTO;
 import bankingSystem.timeline.TimeUnit;
 import bankingSystem.timeline.bankAccount.BankAccount;
@@ -70,15 +71,23 @@ public class BankingSystem implements LogicInterface{
     @Override
     public Set<LoanInformationDTO> showLoansInformation() {
         Set<LoanInformationDTO> loanListToReturn = new HashSet<>();
+
         for (Loan i_Loan : m_LoanList) {
             loanListToReturn.add(new LoanInformationDTO(i_Loan));
         }
+
         return loanListToReturn;
     }
 
     @Override
-    public void showClientsInformation() {
+    public Set<ClientInformationDTO> showClientsInformation() {
+        Set<ClientInformationDTO> clientsListToReturn = new HashSet<>();
 
+        for (BankClient bankClient : m_BankAccountList) {
+            clientsListToReturn.add(new ClientInformationDTO(bankClient));
+        }
+
+        return clientsListToReturn;
     }
 
     @Override

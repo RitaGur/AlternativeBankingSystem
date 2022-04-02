@@ -1,5 +1,6 @@
 package bankingSystem;
 
+import DTO.client.ClientInformationDTO;
 import DTO.loan.LoanInformationDTO;
 import bankingSystem.timeline.bankAccount.BankAccount;
 import bankingSystem.timeline.loan.Loan;
@@ -9,7 +10,7 @@ import java.util.Set;
 public interface LogicInterface {
     public void readFromFile();
     public Set<LoanInformationDTO> showLoansInformation();
-    public void showClientsInformation();
+    public Set<ClientInformationDTO> showClientsInformation();
     public void addMoneyToAccount(String i_ClientAccount, int i_AmountToAdd) throws Exception;
     public void withdrawMoneyFromAccount(String i_ClientAccount, int i_AmountToReduce) throws Exception;
     public void loansDistribution();

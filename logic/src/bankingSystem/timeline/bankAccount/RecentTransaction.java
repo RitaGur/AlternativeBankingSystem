@@ -26,4 +26,12 @@ public class RecentTransaction {
     public double getBalanceAfterTransaction() {
         return f_BalanceAfterTransaction;
     }
+
+    public int getTransactionTimeUnit() {
+        return f_TransactionTimeUnit;
+    }
+
+    public char getKindOfTransaction() {
+        return f_KindOfTransaction;
+    }
 }

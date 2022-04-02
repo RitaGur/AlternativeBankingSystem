@@ -63,6 +63,7 @@ public class ConsoleStart {
                     readFromFile();
                     break;
                 case 2:
+                    //TODO: if a file was not read, we cant show loans info
                     showLoansInformation();
                     break;
                 case 3:
@@ -141,6 +142,8 @@ public class ConsoleStart {
                     "Loan Status: " + singleLoanInformation.getLoanStatus();
             stringToPrint += printByLoanStatus(singleLoanInformation.getLoanStatus(), singleLoanInformation);
         }
+
+        System.out.println(stringToPrint);
     }
 
     private String printByLoanStatus(String loanStatus, LoanInformationDTO singleLoanInformation) {
@@ -152,31 +155,68 @@ public class ConsoleStart {
                 stringToReturn += pendingStatus(singleLoanInformation);
                 break;
             case "ACTIVE":
-
+                stringToReturn += activeStatus(singleLoanInformation);
                 break;
             case "RISK":
-
+                stringToReturn += riskStatus(singleLoanInformation);
                 break;
             case "FINISHED":
-
+                stringToReturn += finishedStatus(singleLoanInformation);
                 break;
         }
 
         return stringToReturn;
     }
 
+    private String finishedStatus(LoanInformationDTO singleLoanInformation) {
+        String stringToReturn = lendersPartInLoanString(singleLoanInformation);
+
+        stringToReturn += "Beginning Time Unit: " + singleLoanInformation.getBeginningTimeUnit() + "\n";
+        stringToReturn += "Ending Time Unit: " + singleLoanInformation.getEndingTimeUnit() + "\n";
+        // TODO: information about previous payments
+
+        return stringToReturn;
+    }
+
+    private String riskStatus(LoanInformationDTO singleLoanInformation) {
+        String stringToReturn = activeStatus(singleLoanInformation);
+        //TODO: information about unpaid payments
+
+        return stringToReturn;
+    }
+
+    private String activeStatus(LoanInformationDTO singleLoanInformation) {
+        String stringToReturn = lendersPartInLoanString(singleLoanInformation);
+        // TODO: information about previous payments
+
+        stringToReturn += "Paid Fund Amount: " + singleLoanInformation.getPaidFund() + "\n";
+        stringToReturn += "Paid Interest Amount: " + singleLoanInformation.getPaidInterest() + "\n";
+        stringToReturn += "Fund Left To Pay Amount: " + singleLoanInformation.getFundLeftToPay() + "\n";
+        stringToReturn += "Interest Left To Pay Amount: " + singleLoanInformation.getInterestLeftToPay() + "\n";
+
+        return stringToReturn;
+    }
+
     private String pendingStatus(LoanInformationDTO singleLoanInformation) {
-        String stringToReturn = "Lenders Information";
+        String stringToReturn = "";
+
+        stringToReturn += lendersPartInLoanString(singleLoanInformation);
+
+        stringToReturn += "Raised loan amount: " + singleLoanInformation.getPendingMoney() + "\n";
+        stringToReturn += "Remaining loan amount to activate: " + (singleLoanInformation.getFundAmount() - singleLoanInformation.getPendingMoney()) + "\n";
+
+        return stringToReturn;
+    }
+
+    private String lendersPartInLoanString(LoanInformationDTO singleLoanInformation) {
+        String stringToReturn = "Lenders Information\n";
         int counter = 1;
 
         for (PartInLoanDTO singlePartInLoanDTO : singleLoanInformation.getLenderSetAndAmounts()) {
             stringToReturn += counter++ + ")";
-            stringToReturn += "Lender Name: " + singlePartInLoanDTO.getLenderName();
-            stringToReturn += "Lender amount in loan: " + singlePartInLoanDTO.getAmountOfLoan();
+            stringToReturn += "Lender Name: " + singlePartInLoanDTO.getLenderName() + "\n";
+            stringToReturn += "Lender amount in loan: " + singlePartInLoanDTO.getAmountOfLoan() + "\n";
         }
-
-        stringToReturn += "Raised loan amount: " + singleLoanInformation.getPendingMoney();
-        stringToReturn += "Remaining loan amount to activate: " + (singleLoanInformation.getFundAmount() - singleLoanInformation.getPendingMoney());
 
         return stringToReturn;
     }
