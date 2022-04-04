@@ -8,7 +8,7 @@ import bankingSystem.timeline.loan.Loan;
 import java.util.Set;
 
 public interface LogicInterface {
-    public void readFromFile();
+    public void readFromFile(String fileName) throws Exception;
     public Set<LoanInformationDTO> showLoansInformation();
     public Set<ClientInformationDTO> showClientsInformation();
     public void addMoneyToAccount(String i_ClientAccount, int i_AmountToAdd) throws Exception;

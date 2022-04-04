@@ -6,8 +6,15 @@ import DTO.loan.LoanInformationDTO;
 import DTO.loan.PartInLoanDTO;
 import bankingSystem.BankingSystem;
 import bankingSystem.LogicInterface;
+import bankingSystem.generated.*;
+import bankingSystem.timeline.TimeUnit;
 import exception.ValueOutOfRangeException;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import java.io.File;
+import java.sql.Time;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
@@ -21,7 +28,6 @@ public class ConsoleStart {
     public ConsoleStart() {
         m_Engine = new BankingSystem();
     }
-
     //TODO: delete throws Exception!!
     public void run() throws Exception {
         startService();
@@ -120,7 +126,7 @@ public class ConsoleStart {
 
     private void addMoney() throws Exception {
         Set<ClientInformationDTO> clientInfoList = m_Engine.showClientsInformation();
-        int counter = 0;
+        int counter = 1;
         System.out.println("Please choose the account you would like to add money to(enter full name): ");
         for (ClientInformationDTO clientDTO: clientInfoList) {
             System.out.println(counter++ + ")" + clientDTO.getClientName());
@@ -134,20 +140,23 @@ public class ConsoleStart {
         userAmountOfMoneyInput = scanUserInput.nextInt();
 
         m_Engine.addMoneyToAccount(userAccountInputString, userAmountOfMoneyInput);
+        System.out.println("Money was added successfully. Current Account Balance is: " + m_Engine.clientInformationByName(userAccountInputString).getClientBalance());
     }
 
     private void showClientsInformation() {
         Set<ClientInformationDTO> clientInfo = m_Engine.showClientsInformation();
+        int counter = 1;
 
         for (ClientInformationDTO clientDTO : clientInfo) {
+            System.out.println(counter++ + ")");
             printClientInformation(clientDTO);
         }
     }
 
     private void printClientInformation(ClientInformationDTO singleClientInformation) {
         String stringToPrint = "Client Information:\n";
-        stringToPrint += "Client name: " + singleClientInformation.getClientName();
-        int counter = 0;
+        stringToPrint += "Client name: " + singleClientInformation.getClientName() + "\n";
+        int counter = 1;
 
         // recent transactions:
         stringToPrint+= "Last Transactions:\n";
@@ -157,7 +166,7 @@ public class ConsoleStart {
             stringToPrint += clientsRecentTransactionString(singleTransaction);
         }
 
-        counter = 0;
+        counter = 1;
 
         // loans as borrower info
         stringToPrint+= "Client loan as Borrower:\n";
@@ -166,7 +175,7 @@ public class ConsoleStart {
             stringToPrint += clientLoansInformationString(loanAsBorrower);
         }
 
-        counter = 0;
+        counter = 1;
 
         //loans as lender info
         stringToPrint+= "Client loan as Lender:\n";
@@ -198,7 +207,7 @@ public class ConsoleStart {
                         "TimeUnits Between Payments: " + loan.getTimeUnitsBetweenPayments() + "\n" +
                         "Loan Interest: " + loan.getLoanInterest() + "\n" +
                         "Loan Final Amount(Fund + Interest): " + loan.getSumAmount() + "\n" +
-                        "Loan Status: " + loan.getLoanStatus();
+                        "Loan Status: " + loan.getLoanStatus() + "\n";
         stringToPrint += clientLoanStatusInformation(loan.getLoanStatus(), loan);
 
         return stringToPrint;
@@ -248,8 +257,10 @@ public class ConsoleStart {
 
     private void showLoansInformation() {
         Set<LoanInformationDTO> loanInfoList = m_Engine.showLoansInformation();
+        int counter = 1;
 
         for (LoanInformationDTO loanDTO : loanInfoList) {
+            System.out.println((counter++) + ")");
             printLoanInformation(loanDTO);
         }
     }
@@ -268,6 +279,7 @@ public class ConsoleStart {
         stringToPrint += printByLoanStatus(singleLoanInformation.getLoanStatus(), singleLoanInformation);
 
         System.out.println(stringToPrint);
+        System.out.println();
     }
 
     private String printByLoanStatus(String loanStatus, LoanInformationDTO singleLoanInformation) {
@@ -346,6 +358,17 @@ public class ConsoleStart {
     }
 
     private void readFromFile() {
+        try {
+            Scanner scanUserInput = new Scanner(System.in);
+            String userInput;
+            System.out.println("Please enter a full path of the XML file you would like to upload: ");
+            userInput = scanUserInput.next();
+            m_Engine.readFromFile(userInput);
+            System.out.println("The file was uploaded successfully!");
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     private int isValidInput(String i_UserInputString, int i_MaxOptions, int i_MinOptions) throws ValueOutOfRangeException {

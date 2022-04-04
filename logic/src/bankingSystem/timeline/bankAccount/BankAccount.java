@@ -1,5 +1,7 @@
 package bankingSystem.timeline.bankAccount;
 
+import bankingSystem.timeline.loan.Loan;
+
 import java.util.List;
 import java.util.Set;
 
@@ -13,5 +15,6 @@ public interface BankAccount {
     public void addLastTransaction(int i_AmountOfTransaction, int i_TransactionTimeUnit);
     public double getAccountBalance();
     public String getClientName();
+    void addAsLoanOwner(Loan loanToAdd);
     //sellLoan method
 }

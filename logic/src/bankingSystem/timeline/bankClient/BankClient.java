@@ -66,6 +66,11 @@ public class BankClient implements BankAccount {
         return f_ClientName;
     }
 
+    @Override
+    public void addAsLoanOwner(Loan loanToAdd) {
+        m_ClientAsBorrowerSet.add(loanToAdd);
+    }
+
     public Set<Loan> getClientAsLenderSet() {
         return m_ClientAsLenderSet;
     }

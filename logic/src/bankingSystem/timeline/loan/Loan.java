@@ -35,7 +35,7 @@ public class Loan implements LoanInterface {
         f_LoanStartSum = i_LoanStartSum;
         f_SumOfTimeUnit = i_SumOfTimeUnit;
         f_TimeUnitsBetweenPayment = i_HowOftenToPay;
-        f_Interest = i_Interest;
+        f_Interest = 0.01 * i_Interest;
         m_LendersSet = new HashSet<>();
         m_Payment = new Payment(f_LoanStartSum, f_Interest, f_SumOfTimeUnit, f_TimeUnitsBetweenPayment);
         m_LoanStatus = LoanStatus.NEW;
@@ -160,7 +160,7 @@ public class Loan implements LoanInterface {
     }
 
     public void checkIfPaymentNeededAndPay(int i_CurrentTimeUnit) { // TODO: use in Banking System
-        if (i_CurrentTimeUnit - (m_BeginningTimeUnit - 1)  % f_TimeUnitsBetweenPayment == 0 ) {
+        if ((i_CurrentTimeUnit - (m_BeginningTimeUnit - 1) % f_TimeUnitsBetweenPayment) == 0 ) {
             if (f_LoanOwner.getAccountBalance() >= m_Payment.getFundToPayEveryTimeUnit() + m_Payment.getInterestToPayEveryTimeUnit())
             m_Payment.addPayment();
             m_LastPaidTimeUnit = i_CurrentTimeUnit;

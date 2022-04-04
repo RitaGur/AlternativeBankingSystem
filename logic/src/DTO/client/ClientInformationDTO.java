@@ -14,12 +14,14 @@ public class ClientInformationDTO {
     private Set<RecentTransactionDTO> recentTransactionList;
     private Set<LoanInformationDTO> clientAsBorrowerLoanList;
     private Set<LoanInformationDTO> clientAsLenderLoanList;
+    private double clientBalance;
 
     public ClientInformationDTO(BankClient bankClient) {
         this.clientName = bankClient.getClientName();
         this.recentTransactionList = recentTransactionListDTO(bankClient.getLastTransactions());
         this.clientAsBorrowerLoanList = clientLoanListDTO(bankClient.getClientAsBorrowerSet());
         this.clientAsLenderLoanList = clientLoanListDTO(bankClient.getClientAsLenderSet());
+        this.clientBalance = bankClient.getAccountBalance();
     }
 
     private Set<LoanInformationDTO> clientLoanListDTO(Set<Loan> clientSet) {
@@ -57,5 +59,9 @@ public class ClientInformationDTO {
 
     public Set<LoanInformationDTO> getClientAsLenderLoanList() {
         return clientAsLenderLoanList;
+    }
+
+    public double getClientBalance() {
+        return clientBalance;
     }
 }

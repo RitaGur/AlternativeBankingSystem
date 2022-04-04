@@ -2,12 +2,18 @@ package bankingSystem;
 
 import DTO.client.ClientInformationDTO;
 import DTO.loan.LoanInformationDTO;
+import bankingSystem.generated.*;
 import bankingSystem.timeline.TimeUnit;
 import bankingSystem.timeline.bankAccount.BankAccount;
 import bankingSystem.timeline.bankClient.BankClient;
 import bankingSystem.timeline.loan.Loan;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import java.io.File;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class BankingSystem implements LogicInterface{
@@ -40,11 +46,12 @@ public class BankingSystem implements LogicInterface{
         m_BankAccountList.add(new BankClient(i_AccountBalance, i_ClientName));
     }
 
-    // maybe change BackAccount to String name and then search for the right BankAccount
     public void addLoan(String i_LoanID, String i_BorrowerName, int i_LoanStartSum, int i_SumOfTimeUnit, int i_HowOftenToPay, double i_Interest, String i_LoanCategory) throws Exception {
         BankAccount borrowerAccount = findBankAccountByName(i_BorrowerName);
         if (checkIfCategoryExists(i_LoanCategory)) {
-            m_LoanList.add(new Loan(i_LoanID, borrowerAccount, i_LoanStartSum, i_SumOfTimeUnit, i_HowOftenToPay, i_Interest, m_CurrentTimeUnit.getCurrentTimeUnit(), i_LoanCategory));
+            Loan loanToAdd =  new Loan(i_LoanID, borrowerAccount, i_LoanStartSum, i_SumOfTimeUnit, i_HowOftenToPay, i_Interest, m_CurrentTimeUnit.getCurrentTimeUnit(), i_LoanCategory);
+            m_LoanList.add(loanToAdd);
+            borrowerAccount.addAsLoanOwner(loanToAdd);
         }
         else {
             throw new Exception("Loan Category does not exist");
@@ -66,8 +73,51 @@ public class BankingSystem implements LogicInterface{
     }
 
     @Override
-    public void readFromFile() {
+    public void readFromFile(String fileName) throws Exception {
+        // parameter - time unit for LoanObject - loan beginning timiUnit
+        try {
+            File file;
+            file = new File(fileName);
+            JAXBContext jaxbContext = JAXBContext.newInstance(AbsDescriptor.class);
+            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+            AbsDescriptor descriptor = (AbsDescriptor) jaxbUnmarshaller.unmarshal(file);
 
+            // Categories:
+            List<String> categoriesList = descriptor.getAbsCategories().getAbsCategory();
+            fromListToSetCategories(categoriesList); //filling m_LoanCategoryList
+
+            // BankClients:
+            fillBankClientsList(descriptor.getAbsCustomers().getAbsCustomer());
+
+            // Loans:
+            fillLoanList(descriptor.getAbsLoans().getAbsLoan());
+
+
+        } catch (JAXBException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    private void fillLoanList(List<AbsLoan> absLoan) throws Exception {
+        for (AbsLoan i_Loan : absLoan) {
+            BankAccount loanOwner = findBankAccountByName(i_Loan.getAbsOwner());
+            m_LoanList.add(new Loan(i_Loan.getId(), loanOwner, i_Loan.getAbsCapital(), i_Loan.getAbsTotalYazTime(), i_Loan.getAbsPaysEveryYaz(),
+                    i_Loan.getAbsIntristPerPayment(), m_CurrentTimeUnit.getCurrentTimeUnit(),i_Loan.getAbsCategory()));
+        }
+    }
+
+    private void fillBankClientsList(List<AbsCustomer> absCustomerList) {
+        for (AbsCustomer i_Customer : absCustomerList) {
+            m_BankAccountList.add(new BankClient(i_Customer.getAbsBalance(), i_Customer.getName()));
+        }
+    }
+
+    private void fromListToSetCategories(List<String> i_ListToConvert) {
+        for (String i_CategoryInList: i_ListToConvert) {
+            m_LoanCategoryList.add(i_CategoryInList);
+        }
     }
 
     @Override
@@ -118,11 +168,11 @@ public class BankingSystem implements LogicInterface{
         }
     }
 
-    private BankAccount findBankAccountByName(String i_ClientName) throws Exception {
-        BankAccount account = null;
+    private BankClient findBankAccountByName(String i_ClientName) throws Exception {
+        BankClient account = null;
 
-        for (BankClient i_BankClient:m_BankAccountList) {
-            if (i_BankClient.getClientName() == i_ClientName) {
+        for (BankClient i_BankClient : m_BankAccountList) {
+            if (i_BankClient.getClientName().equals(i_ClientName)) {
                 account = i_BankClient;
             }
         }
@@ -144,5 +194,10 @@ public class BankingSystem implements LogicInterface{
         }
 
         return categoryExist;
+    }
+
+    public ClientInformationDTO clientInformationByName(String i_ClientName) throws Exception {
+        BankClient clientAccount = findBankAccountByName(i_ClientName);
+        return new ClientInformationDTO(clientAccount);
     }
 }

@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/DTOObjects/DTOObjects.iml" filepath="$PROJECT_DIR$/DTOObjects/DTOObjects.iml" />
       <module fileurl="file://$PROJECT_DIR$/Ex01.iml" filepath="$PROJECT_DIR$/Ex01.iml" />
       <module fileurl="file://$PROJECT_DIR$/logic/logic.iml" filepath="$PROJECT_DIR$/logic/logic.iml" />
       <module fileurl="file://$PROJECT_DIR$/ui/ui.iml" filepath="$PROJECT_DIR$/ui/ui.iml" />
