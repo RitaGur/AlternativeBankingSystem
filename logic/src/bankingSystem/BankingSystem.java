@@ -158,7 +158,7 @@ public class BankingSystem implements LogicInterface {
     }
 
     @Override
-    public void loansDistribution() {
+    public void loansDistribution(Set<LoanInformationDTO> chosenLoans, int amountOfMoneyToInvest) {
 
     }
 
@@ -251,6 +251,6 @@ public class BankingSystem implements LogicInterface {
         for (int i = 0; i < numberInInt - 1; i++) {
             categoryIterator.next();
         }
-        return categoryIterator.next(); //TODO; check it brings the right category
+        return categoryIterator.next();
     }
 }

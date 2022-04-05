@@ -13,7 +13,7 @@ public interface LogicInterface {
     public Set<ClientInformationDTO> showClientsInformation();
     public void addMoneyToAccount(String i_ClientAccount, int i_AmountToAdd) throws Exception;
     public void withdrawMoneyFromAccount(String i_ClientAccount, int i_AmountToReduce) throws Exception;
-    public void loansDistribution();
+    public void loansDistribution(Set<LoanInformationDTO> chosenLoans, int amountOfMoneyToInvest);
     public void promoteTimeline();
 
     public void addBankClient(int i_AccountBalance, String i_ClientName) throws Exception;
