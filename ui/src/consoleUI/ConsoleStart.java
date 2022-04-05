@@ -66,14 +66,8 @@ public class ConsoleStart {
                 System.out.println(i_NumberFormatException.getMessage());
             }
             catch (Exception e) {
-               // while (userInputInt != 1 && userInputInt != 8) {
-                    System.out.println(e.getMessage() + " Please upload a file before any other operation.");
-                    showMenu();
-                   // userInputString = scanUserInput.next();
-                   // userInputInt = isValidInput(userInputString, 8, 1);
-
-               // }
-                //userInputChoices(userInputInt);
+                System.out.println(e.getMessage() + " Please upload a file before any other operation.");
+                showMenu();
             }
         }
         while (userInputInt != f_MaxOptionsInMenu);
@@ -132,7 +126,58 @@ public class ConsoleStart {
 
     }
 
-    private void loansDistribution() {
+    private void loansDistribution() throws Exception {
+        String userAccountInputString, categories;
+        Scanner scanUserInput = new Scanner(System.in);
+        Set<ClientInformationDTO> clientInfoList = m_Engine.showClientsInformation();
+        int counter = 1, amountOfMoneyToInvest = -1, interest = -1, minimumTotalTimeunits = -1;
+        System.out.println("Please choose the account you would like to add an investment to (enter full name):");
+
+        for (ClientInformationDTO clientDTO: clientInfoList) {
+            System.out.println(counter++ + ")Client Name:" + clientDTO.getClientName());
+            System.out.println("  Account Balance: " + clientDTO.getClientBalance());
+        }
+        counter = 1;
+        userAccountInputString = scanUserInput.nextLine(); //TODO: checkValidation
+        System.out.println("Please enter the amount of money you would like to invest (required field):");
+        amountOfMoneyToInvest = Integer.parseInt(scanUserInput.nextLine());
+        //TODO: checkAmountOfMoneyToInvest - while/try catch
+        System.out.println("Please choose categories for your investment:");
+        System.out.println("You can choose as many as you prefer, or none. For example: 1 2 3 / 0");//TODO: check the format
+        System.out.println("In case you don't choose any category, the system would offer you any loan, regardless it's category. ");
+        for (String category : m_Engine.getLoanCategoryList()) {
+            System.out.println(counter++ + ")" + category);
+        }
+        categories = scanUserInput.nextLine();
+
+        System.out.println("Please fill the interest you would like to get (decimal number bigger than 0): ");
+        System.out.println("In case you don't fill this field, the system would offer you any loan, regardless it's interest.");
+        interest = Integer.parseInt(scanUserInput.nextLine());
+
+        System.out.println("Please fill minimum total timeunits for a loan (Integer):");
+        System.out.println("In case you don't fill this field, the system would offer you any loan, regardless it's total timeunits.");
+        minimumTotalTimeunits = Integer.parseInt(scanUserInput.nextLine());
+
+        Set<LoanInformationDTO> loansOptions = m_Engine.optionsForLoans(userAccountInputString, categories, amountOfMoneyToInvest,
+                                                interest, minimumTotalTimeunits);
+
+        if(loansOptions.size() == 0) {
+            System.out.println("Sorry, there was no suitable loan for your demands.");
+            return;
+        }
+
+        String stringToPrint = "Please choose a loan from the options below:\n ";
+        stringToPrint += "You can choose as many as you prefer. For example; 1 2 3\n";
+
+        counter = 1;
+        for (LoanInformationDTO loanOption : loansOptions) {
+            stringToPrint += counter++ + ")\n";
+            stringToPrint += clientLoansInformationString(loanOption) + "\n";
+        }
+        counter = 1;
+        System.out.println(stringToPrint);
+
+        String chosenLoans = scanUserInput.nextLine();
     }
 
     private void withdrawMoney() throws Exception { //TODO: take care of duplicated code
@@ -143,6 +188,7 @@ public class ConsoleStart {
         for (ClientInformationDTO clientDTO: clientInfoList) {
             System.out.println(counter++ + ")" + clientDTO.getClientName());
         }
+        counter = 1;
 
         String userAccountInputString;
         int userAccountInput, userAmountOfMoneyInput;
@@ -165,6 +211,7 @@ public class ConsoleStart {
         for (ClientInformationDTO clientDTO: clientInfoList) {
             System.out.println(counter++ + ")" + clientDTO.getClientName());
         }
+        counter = 1;
         //TODO: back
 //        System.out.println(counter++ + ") Back");
 
@@ -206,6 +253,7 @@ public class ConsoleStart {
             System.out.println("Client number " + counter++ + ":");
             printClientInformation(clientDTO);
         }
+        counter = 1;
         System.out.println("---------------------------");
     }
 
@@ -240,7 +288,7 @@ public class ConsoleStart {
             stringToPrint += "Client loan number " + counter++ + ":\n";
             stringToPrint += clientLoansInformationString(loanAsLender);
         }
-
+        counter = 1;
         stringToPrint += "*******************************\n";
 
         System.out.println(stringToPrint);
@@ -323,7 +371,7 @@ public class ConsoleStart {
             System.out.println("Loan Number " + (counter++) + ":");
             printLoanInformation(loanDTO);
         }
-
+        counter = 1;
         System.out.println("---------------------------");
     }
 
@@ -415,7 +463,7 @@ public class ConsoleStart {
             stringToReturn += "Lender Name: " + singlePartInLoanDTO.getLenderName() + "\n";
             stringToReturn += "Lender amount in loan: " + singlePartInLoanDTO.getAmountOfLoan() + "\n";
         }
-
+        counter = 1;
         return stringToReturn;
     }
 

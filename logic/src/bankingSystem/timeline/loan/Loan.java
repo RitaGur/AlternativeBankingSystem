@@ -165,7 +165,7 @@ public class Loan {
         for (PartInLoan i_PartInLoan: m_LendersAndAmountsSet) {
             i_PartInLoan.getLender().addMoneyToAccount(m_Payment.getSumToPayEveryTimeUnit());
         }
-        // TODO: in stream
+
     }
 
     public double sumAmountToPayEveryTimeUnit() {

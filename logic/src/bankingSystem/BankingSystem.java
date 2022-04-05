@@ -12,11 +12,9 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.File;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class BankingSystem implements LogicInterface{
+public class BankingSystem implements LogicInterface {
     private Set<BankClient> m_BankAccountList;
     private Set<Loan> m_LoanList;
     private TimeUnit m_CurrentTimeUnit;
@@ -33,7 +31,7 @@ public class BankingSystem implements LogicInterface{
     public void addBankClient(int i_AccountBalance, String i_ClientName) throws Exception {
         BankAccount account = null;
 
-        for (BankClient i_BankClient:m_BankAccountList) {
+        for (BankClient i_BankClient : m_BankAccountList) {
             if (i_BankClient.getClientName() == i_ClientName) {
                 account = i_BankClient;
             }
@@ -52,8 +50,7 @@ public class BankingSystem implements LogicInterface{
             Loan loanToAdd = new Loan(i_LoanID, borrowerAccount, i_LoanStartSum, i_SumOfTimeUnit, i_HowOftenToPay, i_Interest, m_CurrentTimeUnit.getCurrentTimeUnit(), i_LoanCategory);
             m_LoanList.add(loanToAdd);
             borrowerAccount.addAsLoanOwner(loanToAdd);
-        }
-        else {
+        } else {
             throw new Exception("Loan Category does not exist");
         }
     }
@@ -117,7 +114,7 @@ public class BankingSystem implements LogicInterface{
 
     private void fromListToSetCategories(List<String> i_ListToConvert) {
         m_LoanCategoryList = new HashSet<>();
-        for (String i_CategoryInList: i_ListToConvert) {
+        for (String i_CategoryInList : i_ListToConvert) {
             m_LoanCategoryList.add(i_CategoryInList);
         }
     }
@@ -155,7 +152,7 @@ public class BankingSystem implements LogicInterface{
     @Override
     public void withdrawMoneyFromAccount(String i_ClientAccount, int i_AmountToReduce) throws Exception {
         BankAccount accountToReduceMoney = findBankAccountByName(i_ClientAccount);
-       //accountToReduceMoney.withdrawMoneyFromAccount(i_AmountToReduce);
+        //accountToReduceMoney.withdrawMoneyFromAccount(i_AmountToReduce);
         accountToReduceMoney.addLastTransaction(i_AmountToReduce * (-1), m_CurrentTimeUnit.getCurrentTimeUnit());
         accountToReduceMoney.withdrawMoneyFromAccount(i_AmountToReduce);
     }
@@ -167,7 +164,7 @@ public class BankingSystem implements LogicInterface{
 
     @Override
     public void updateLoansCategories(Set<String> i_LoansCategories) {
-        for (String i_Category: i_LoansCategories) {
+        for (String i_Category : i_LoansCategories) {
             m_LoanCategoryList.add(i_Category);
         }
     }
@@ -191,7 +188,7 @@ public class BankingSystem implements LogicInterface{
     private boolean checkIfCategoryExists(String i_CategoryToCheck) {
         boolean categoryExist = false;
 
-        for (String i_Category:m_LoanCategoryList) {
+        for (String i_Category : m_LoanCategoryList) {
             if (i_Category.equals(i_CategoryToCheck)) {
                 categoryExist = true;
             }
@@ -203,5 +200,57 @@ public class BankingSystem implements LogicInterface{
     public ClientInformationDTO clientInformationByName(String i_ClientName) throws Exception {
         BankClient clientAccount = findBankAccountByName(i_ClientName);
         return new ClientInformationDTO(clientAccount);
+    }
+
+    public Set<String> getLoanCategoryList() {
+        return m_LoanCategoryList;
+    }
+
+    public Set<LoanInformationDTO> optionsForLoans(String clientName, String categories, int amountOfMoneyToInvest,
+                                                   int interest, int minimumTotalTimeunits) throws Exception {
+        Set<LoanInformationDTO> optionLoansSet = new HashSet<>();
+        BankAccount investClient = findBankAccountByName(clientName);
+        Set<String> chosenCategories = new HashSet<>();
+        fillChosenCategoriesList(chosenCategories, categories);
+
+        try {
+            if (amountOfMoneyToInvest > investClient.getAccountBalance()) {
+                throw new Exception("Sorry, you do not have enough money in your account to invest this amount of money.");
+            }
+            for (Loan loanOfBankingSystem : m_LoanList) {
+                //check our client is not the loan owner
+                if (!loanOfBankingSystem.getLoanOwner().getClientName().equals(clientName)) {
+                    if (chosenCategories.contains(loanOfBankingSystem.getLoanCategory()) || chosenCategories.size() == 0) { //what if null?
+                        if (interest >= (loanOfBankingSystem.getInterest()*100) || interest == -1) {
+                            if (minimumTotalTimeunits >= loanOfBankingSystem.getSumOfTimeUnit()) {
+                                optionLoansSet.add(new LoanInformationDTO(loanOfBankingSystem));
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+
+        return optionLoansSet;
+    }
+
+    private void fillChosenCategoriesList(Set<String> chosenCategories, String categories) {
+        if (!categories.equals("0")) {
+            StringTokenizer numbers = new StringTokenizer(categories);
+            while (numbers.hasMoreTokens()) {
+                chosenCategories.add(findCategoryByNumberString(numbers.nextToken()));
+            }
+        }
+    }
+
+    private String findCategoryByNumberString(String numberAsString) {
+        int numberInInt = Integer.parseInt(numberAsString);
+        Iterator<String> categoryIterator = m_LoanCategoryList.iterator();
+        for (int i = 0; i < numberInInt - 1; i++) {
+            categoryIterator.next();
+        }
+        return categoryIterator.next(); //TODO; check it brings the right category
     }
 }
