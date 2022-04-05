@@ -101,22 +101,22 @@ public class BankingSystem implements LogicInterface{
     }
 
     private void fillLoanList(List<AbsLoan> absLoan) throws Exception {
+        m_LoanList = new HashSet<>();
         for (AbsLoan i_Loan : absLoan) {
- //           BankAccount loanOwner = findBankAccountByName(i_Loan.getAbsOwner());
             addLoan(i_Loan.getId(), i_Loan.getAbsOwner(), i_Loan.getAbsCapital(), i_Loan.getAbsTotalYazTime(), i_Loan.getAbsPaysEveryYaz(),
                     i_Loan.getAbsIntristPerPayment(), i_Loan.getAbsCategory());
-//            m_LoanList.add(new Loan(i_Loan.getId(), loanOwner, i_Loan.getAbsCapital(), i_Loan.getAbsTotalYazTime(), i_Loan.getAbsPaysEveryYaz(),
-//                    i_Loan.getAbsIntristPerPayment(), m_CurrentTimeUnit.getCurrentTimeUnit(),i_Loan.getAbsCategory()));
         }
     }
 
     private void fillBankClientsList(List<AbsCustomer> absCustomerList) {
+        m_BankAccountList = new HashSet<>();
         for (AbsCustomer i_Customer : absCustomerList) {
             m_BankAccountList.add(new BankClient(i_Customer.getAbsBalance(), i_Customer.getName()));
         }
     }
 
     private void fromListToSetCategories(List<String> i_ListToConvert) {
+        m_LoanCategoryList = new HashSet<>();
         for (String i_CategoryInList: i_ListToConvert) {
             m_LoanCategoryList.add(i_CategoryInList);
         }
@@ -147,15 +147,17 @@ public class BankingSystem implements LogicInterface{
     @Override
     public void addMoneyToAccount(String i_ClientAccount, int i_AmountToAdd) throws Exception {
         BankAccount accountToAddMoney = findBankAccountByName(i_ClientAccount);
-        accountToAddMoney.addMoneyToAccount(i_AmountToAdd);
+        //accountToAddMoney.addMoneyToAccount(i_AmountToAdd);
         accountToAddMoney.addLastTransaction(i_AmountToAdd, m_CurrentTimeUnit.getCurrentTimeUnit());
+        accountToAddMoney.addMoneyToAccount(i_AmountToAdd);
     }
 
     @Override
     public void withdrawMoneyFromAccount(String i_ClientAccount, int i_AmountToReduce) throws Exception {
-        BankAccount accountToAddMoney = findBankAccountByName(i_ClientAccount);
-        accountToAddMoney.addMoneyToAccount(i_AmountToReduce);
-        accountToAddMoney.addLastTransaction(i_AmountToReduce, m_CurrentTimeUnit.getCurrentTimeUnit());
+        BankAccount accountToReduceMoney = findBankAccountByName(i_ClientAccount);
+       //accountToReduceMoney.withdrawMoneyFromAccount(i_AmountToReduce);
+        accountToReduceMoney.addLastTransaction(i_AmountToReduce * (-1), m_CurrentTimeUnit.getCurrentTimeUnit());
+        accountToReduceMoney.withdrawMoneyFromAccount(i_AmountToReduce);
     }
 
     @Override

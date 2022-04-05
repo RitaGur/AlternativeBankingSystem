@@ -39,7 +39,7 @@ public class ClientInformationDTO {
 
         for (RecentTransaction recentTransaction : lastTransactions) {
             setToReturn.add(new RecentTransactionDTO(recentTransaction.getAmountOfTransaction(),recentTransaction.getBalanceBeforeTransaction(),
-                    recentTransaction.getBalanceBeforeTransaction(), recentTransaction.getTransactionTimeUnit(), recentTransaction.getKindOfTransaction()));
+                    recentTransaction.getBalanceAfterTransaction(), recentTransaction.getTransactionTimeUnit(), recentTransaction.getKindOfTransaction()));
         }
 
         return setToReturn;

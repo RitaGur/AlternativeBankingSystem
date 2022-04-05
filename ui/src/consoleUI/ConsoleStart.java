@@ -24,9 +24,11 @@ public class ConsoleStart {
     private final int f_MaxOptionsInMenu = 8;
 
     private BankingSystem m_Engine;
+    private boolean isFileRead;
 
     public ConsoleStart() {
         m_Engine = new BankingSystem();
+        isFileRead = false;
     }
     //TODO: delete throws Exception!!
     public void run() throws Exception {
@@ -52,6 +54,9 @@ public class ConsoleStart {
             try{
                 userInputString = scanUserInput.next();
                 userInputInt = isValidInput(userInputString, 8, 1);
+                if (userInputInt != 1 &&  userInputInt != 8 && isFileRead == false) {
+                    throw new Exception("A file was not read.");
+                }
                 userInputChoices(userInputInt);
             }
             catch (ValueOutOfRangeException i_OutOfRangeException){
@@ -59,6 +64,16 @@ public class ConsoleStart {
             }
             catch (NumberFormatException i_NumberFormatException){
                 System.out.println(i_NumberFormatException.getMessage());
+            }
+            catch (Exception e) {
+               // while (userInputInt != 1 && userInputInt != 8) {
+                    System.out.println(e.getMessage() + " Please upload a file before any other operation.");
+                    showMenu();
+                   // userInputString = scanUserInput.next();
+                   // userInputInt = isValidInput(userInputString, 8, 1);
+
+               // }
+                //userInputChoices(userInputInt);
             }
         }
         while (userInputInt != f_MaxOptionsInMenu);
@@ -71,7 +86,6 @@ public class ConsoleStart {
                     readFromFile();
                     break;
                 case 2:
-                    //TODO: if a file was not read, we cant show loans info
                     showLoansInformation();
                     break;
                 case 3:
@@ -121,7 +135,26 @@ public class ConsoleStart {
     private void loansDistribution() {
     }
 
-    private void withdrawMoney() {
+    private void withdrawMoney() throws Exception { //TODO: take care of duplicated code
+        Set<ClientInformationDTO> clientInfoList = m_Engine.showClientsInformation();
+        int counter = 1;
+        System.out.println("Please choose the account you would like to withdraw money from(enter full name): ");
+
+        for (ClientInformationDTO clientDTO: clientInfoList) {
+            System.out.println(counter++ + ")" + clientDTO.getClientName());
+        }
+
+        String userAccountInputString;
+        int userAccountInput, userAmountOfMoneyInput;
+        Scanner scanUserInput = new Scanner(System.in);
+        userAccountInputString = scanUserInput.next();
+
+        //TODO: try catch
+        System.out.println("Please enter the amount of money you would like to withdraw from the chosen account: ");
+        userAmountOfMoneyInput = scanUserInput.nextInt();
+
+        m_Engine.withdrawMoneyFromAccount(userAccountInputString, userAmountOfMoneyInput);
+        System.out.println("Money was withdrawed successfully. Current Account Balance is: " + m_Engine.clientInformationByName(userAccountInputString).getClientBalance());
     }
 
     private void addMoney() throws Exception {
@@ -185,7 +218,7 @@ public class ConsoleStart {
         Set<RecentTransactionDTO> recentTransactionList = singleClientInformation.getRecentTransactionList();
         stringToPrint += "*****Last Transactions*****\n";
         for (RecentTransactionDTO singleTransaction : recentTransactionList) {
-            stringToPrint += counter++ + ")";
+            stringToPrint += "Transaction number " + counter++ + ":\n";
             stringToPrint += clientsRecentTransactionString(singleTransaction);
         }
         stringToPrint+= "*******************************\n";
@@ -214,7 +247,7 @@ public class ConsoleStart {
     }
 
     private String clientsRecentTransactionString(RecentTransactionDTO singleTransaction) {
-        String stringToReturn = "Transaction Information: ";
+        String stringToReturn = "";
         stringToReturn += "Transaction Timeunit: " + singleTransaction.getTransactionTimeUnit() + "\n" +
                 "Transaction Amount: " +singleTransaction.getAmountOfTransaction() + "\n" +
                 "Kind Of Transaction: " + singleTransaction.getKindOfTransaction() + "\n" +
@@ -395,6 +428,7 @@ public class ConsoleStart {
             m_Engine.readFromFile(userInput);
             System.out.println("The file was uploaded successfully!");
             System.out.println();
+            isFileRead = true;
         }
         catch (Exception e) {
             System.out.println(e.getMessage());

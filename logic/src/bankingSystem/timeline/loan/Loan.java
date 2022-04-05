@@ -3,20 +3,18 @@ package bankingSystem.timeline.loan;
 import bankingSystem.timeline.bankAccount.BankAccount;
 import bankingSystem.timeline.bankClient.BankClient;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
-public class Loan implements LoanInterface {
+public class Loan {
     private final String f_LoanNameID;
     private final BankAccount f_LoanOwner; //The Borrower
     private final int f_LoanStartSum;
     private final int f_SumOfTimeUnit; // how many yaz - loan duration
     private final int f_TimeUnitsBetweenPayment; // how often (by yaz) you pay
     private final double f_Interest; //ribit - decimal number (0, 100]
-    private Payment m_Payment;
-    private Set<PartInLoan> m_LendersSet;
+    private Payment m_Payment; //TODO: list?
+    private Set<PartInLoan> m_LendersAndAmountsSet;
     private LoanStatus m_LoanStatus;
     private int m_PendingMoney = 0; // raised money before activation
     private int m_BeginningTimeUnit;
@@ -36,25 +34,19 @@ public class Loan implements LoanInterface {
         f_SumOfTimeUnit = i_SumOfTimeUnit;
         f_TimeUnitsBetweenPayment = i_HowOftenToPay;
         f_Interest = 0.01 * i_Interest;
-        m_LendersSet = new HashSet<>();
+        m_LendersAndAmountsSet = new HashSet<>();
         m_Payment = new Payment(f_LoanStartSum, f_Interest, f_SumOfTimeUnit, f_TimeUnitsBetweenPayment);
         m_LoanStatus = LoanStatus.NEW;
         m_BeginningTimeUnit = i_LoanBeginningTimeUnit;
         f_LoanCategory = i_LoanCategory;
     }
 
-    @Override
     public int howManyTimeUnitsLeftForLoan(int i_CurrentTimeUnit) {
         return f_SumOfTimeUnit - i_CurrentTimeUnit;
     }
 
-    @Override
-    public Set<PartInLoan> lendersList() {
-        return m_LendersSet;
-    }
-
-    public void addLender(BankClient i_NewLender, int i_AmountOfLoan) {
-        m_LendersSet.add(new PartInLoan(i_NewLender, i_AmountOfLoan));
+    public void addLender(BankClient i_NewLender, int i_AmountOfLoan) { //TODO: use in shibutz method
+        m_LendersAndAmountsSet.add(new PartInLoan(i_NewLender, i_AmountOfLoan));
     }
 
     public void timeUnitPayment() { // as monthly payment
@@ -106,8 +98,8 @@ public class Loan implements LoanInterface {
     }
 
     public Set<PartInLoan> getLendersSet() {
-        return m_LendersSet; // clone?
-    }
+        return m_LendersAndAmountsSet;
+    } // TODO: clone?
 
     public LoanStatus getLoanStatus() {
         return m_LoanStatus;
@@ -170,7 +162,7 @@ public class Loan implements LoanInterface {
     }
 
     public void payToLenders() {
-        for (PartInLoan i_PartInLoan: m_LendersSet) {
+        for (PartInLoan i_PartInLoan: m_LendersAndAmountsSet) {
             i_PartInLoan.getLender().addMoneyToAccount(m_Payment.getSumToPayEveryTimeUnit());
         }
         // TODO: in stream

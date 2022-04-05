@@ -18,6 +18,4 @@ public class PartInLoan {
     public BankAccount getLender() {
         return m_Lender;
     }
-
-    //TODO: a list of PartInLoan
 }
