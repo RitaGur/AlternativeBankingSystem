@@ -35,13 +35,13 @@ public class ConsoleStart {
 
     //TODO: delete throws Exception!!
     private void startService() throws Exception {
-        Set<String> categories = new HashSet<>();
-        categories.add("abc");
-        categories.add("drf");
-        m_Engine.updateLoansCategories(categories);
-        // TODO: delete
-        m_Engine.addBankClient(5000, "Menash");
-        m_Engine.addLoan("Stock market intro", "Menash", 2400, 12, 1, 5, "abc");
+//        Set<String> categories = new HashSet<>();
+//        categories.add("abc");
+//        categories.add("drf");
+//        m_Engine.updateLoansCategories(categories);
+//        // TODO: delete
+//        m_Engine.addBankClient(5000, "Menash");
+//        m_Engine.addLoan("Stock market intro", "Menash", 2400, 12, 1, 5, "abc");
 
         showMenu();
         String userInputString;
@@ -128,14 +128,26 @@ public class ConsoleStart {
         Set<ClientInformationDTO> clientInfoList = m_Engine.showClientsInformation();
         int counter = 1;
         System.out.println("Please choose the account you would like to add money to(enter full name): ");
+
         for (ClientInformationDTO clientDTO: clientInfoList) {
             System.out.println(counter++ + ")" + clientDTO.getClientName());
         }
+        //TODO: back
+//        System.out.println(counter++ + ") Back");
+
         String userAccountInputString;
         int userAccountInput, userAmountOfMoneyInput;
         Scanner scanUserInput = new Scanner(System.in);
         userAccountInputString = scanUserInput.next();
 
+//        userInputString = scanUserInput.next();
+//        userInputInt = isValidInput(userInputString, 8, 1);
+
+/*        if (!isValidNameInput(userAccountInputString)) {
+            System.out.println("Please enter a valid account name.");
+        }//try catch*/
+
+        //TODO: try catch
         System.out.println("Please enter the amount of money you would like to add to the chosen account: ");
         userAmountOfMoneyInput = scanUserInput.nextInt();
 
@@ -143,46 +155,60 @@ public class ConsoleStart {
         System.out.println("Money was added successfully. Current Account Balance is: " + m_Engine.clientInformationByName(userAccountInputString).getClientBalance());
     }
 
+    private boolean isValidNameInput(String userAccountInputString) {
+        boolean nameIsValid = false;
+
+        if(userAccountInputString.matches("[a-zA-z] ")) {
+
+        }
+        return nameIsValid;
+    }
+
     private void showClientsInformation() {
         Set<ClientInformationDTO> clientInfo = m_Engine.showClientsInformation();
+        System.out.println("-----Clients Information-----");
         int counter = 1;
 
         for (ClientInformationDTO clientDTO : clientInfo) {
-            System.out.println(counter++ + ")");
+            System.out.println("Client number " + counter++ + ":");
             printClientInformation(clientDTO);
         }
+        System.out.println("---------------------------");
     }
 
     private void printClientInformation(ClientInformationDTO singleClientInformation) {
-        String stringToPrint = "Client Information:\n";
+        String stringToPrint = "";
         stringToPrint += "Client name: " + singleClientInformation.getClientName() + "\n";
         int counter = 1;
 
         // recent transactions:
-        stringToPrint+= "Last Transactions:\n";
         Set<RecentTransactionDTO> recentTransactionList = singleClientInformation.getRecentTransactionList();
+        stringToPrint += "*****Last Transactions*****\n";
         for (RecentTransactionDTO singleTransaction : recentTransactionList) {
             stringToPrint += counter++ + ")";
             stringToPrint += clientsRecentTransactionString(singleTransaction);
         }
-
+        stringToPrint+= "*******************************\n";
         counter = 1;
 
         // loans as borrower info
-        stringToPrint+= "Client loan as Borrower:\n";
+        stringToPrint+= "*****Client loans as Borrower*****\n";
         for (LoanInformationDTO loanAsBorrower : singleClientInformation.getClientAsBorrowerLoanList()) {
-            stringToPrint += counter++ + ")";
+            stringToPrint += "Client loan number " + counter++ + ":\n";
             stringToPrint += clientLoansInformationString(loanAsBorrower);
         }
 
+        stringToPrint += "*******************************\n";
         counter = 1;
 
         //loans as lender info
-        stringToPrint+= "Client loan as Lender:\n";
-        for (LoanInformationDTO loanAsBorrower : singleClientInformation.getClientAsBorrowerLoanList()) {
-            stringToPrint += counter++ + ")";
-            stringToPrint += clientLoansInformationString(loanAsBorrower);
+        stringToPrint+= "*****Client loans as Lender*****\n";
+        for (LoanInformationDTO loanAsLender : singleClientInformation.getClientAsLenderLoanList()) {
+            stringToPrint += "Client loan number " + counter++ + ":\n";
+            stringToPrint += clientLoansInformationString(loanAsLender);
         }
+
+        stringToPrint += "*******************************\n";
 
         System.out.println(stringToPrint);
     }
@@ -199,16 +225,16 @@ public class ConsoleStart {
     }
 
     private String clientLoansInformationString(LoanInformationDTO loan) {
-        String stringToPrint = "Loan Information:\n";
+        String stringToPrint = "";
         stringToPrint +=
                 "Loan ID: " + loan.getLoanNameID() + "\n" +
                         "Loan Category: " + loan.getLoanCategory() + "\n" +
                         "Loan Initial Amount: " + loan.getLoanStartSum() + "\n" +
                         "TimeUnits Between Payments: " + loan.getTimeUnitsBetweenPayments() + "\n" +
-                        "Loan Interest: " + loan.getLoanInterest() + "\n" +
+                        "Loan Interest: " + (int)(loan.getLoanInterest()*100) + "%\n" +
                         "Loan Final Amount(Fund + Interest): " + loan.getSumAmount() + "\n" +
                         "Loan Status: " + loan.getLoanStatus() + "\n";
-        stringToPrint += clientLoanStatusInformation(loan.getLoanStatus(), loan);
+        stringToPrint += clientLoanStatusInformation(loan.getLoanStatus(), loan) + "\n";
 
         return stringToPrint;
     }
@@ -257,16 +283,19 @@ public class ConsoleStart {
 
     private void showLoansInformation() {
         Set<LoanInformationDTO> loanInfoList = m_Engine.showLoansInformation();
+        System.out.println("-----Loans Information-----");
         int counter = 1;
 
         for (LoanInformationDTO loanDTO : loanInfoList) {
-            System.out.println((counter++) + ")");
+            System.out.println("Loan Number " + (counter++) + ":");
             printLoanInformation(loanDTO);
         }
+
+        System.out.println("---------------------------");
     }
 
     private void printLoanInformation(LoanInformationDTO singleLoanInformation) {
-        String stringToPrint = "Loan Information:\n";
+        String stringToPrint = "";
         stringToPrint +=
                     "Loan ID: " + singleLoanInformation.getLoanNameID() + "\n" +
                      "Loan Owner: " + singleLoanInformation.getBorrowerName() + "\n" +
@@ -274,7 +303,7 @@ public class ConsoleStart {
                     "Loan Status: " + singleLoanInformation.getLoanStatus() + "\n" +
                      "Loan Sum: " + singleLoanInformation.getLoanStartSum() + "\n" +
                      "Loan Time Duration: " + singleLoanInformation.getLoanSumOfTimeUnit() + "\n" +
-                     "Loan Interest: " + singleLoanInformation.getLoanInterest() + "\n" +
+                     "Loan Interest: " + (int)(singleLoanInformation.getLoanInterest() * 100) + "%" + "\n" +
                      "Timeunits between payments: " + singleLoanInformation.getTimeUnitsBetweenPayments();
         stringToPrint += printByLoanStatus(singleLoanInformation.getLoanStatus(), singleLoanInformation);
 
@@ -365,6 +394,7 @@ public class ConsoleStart {
             userInput = scanUserInput.next();
             m_Engine.readFromFile(userInput);
             System.out.println("The file was uploaded successfully!");
+            System.out.println();
         }
         catch (Exception e) {
             System.out.println(e.getMessage());

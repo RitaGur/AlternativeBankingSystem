@@ -49,7 +49,7 @@ public class BankingSystem implements LogicInterface{
     public void addLoan(String i_LoanID, String i_BorrowerName, int i_LoanStartSum, int i_SumOfTimeUnit, int i_HowOftenToPay, double i_Interest, String i_LoanCategory) throws Exception {
         BankAccount borrowerAccount = findBankAccountByName(i_BorrowerName);
         if (checkIfCategoryExists(i_LoanCategory)) {
-            Loan loanToAdd =  new Loan(i_LoanID, borrowerAccount, i_LoanStartSum, i_SumOfTimeUnit, i_HowOftenToPay, i_Interest, m_CurrentTimeUnit.getCurrentTimeUnit(), i_LoanCategory);
+            Loan loanToAdd = new Loan(i_LoanID, borrowerAccount, i_LoanStartSum, i_SumOfTimeUnit, i_HowOftenToPay, i_Interest, m_CurrentTimeUnit.getCurrentTimeUnit(), i_LoanCategory);
             m_LoanList.add(loanToAdd);
             borrowerAccount.addAsLoanOwner(loanToAdd);
         }
@@ -102,9 +102,11 @@ public class BankingSystem implements LogicInterface{
 
     private void fillLoanList(List<AbsLoan> absLoan) throws Exception {
         for (AbsLoan i_Loan : absLoan) {
-            BankAccount loanOwner = findBankAccountByName(i_Loan.getAbsOwner());
-            m_LoanList.add(new Loan(i_Loan.getId(), loanOwner, i_Loan.getAbsCapital(), i_Loan.getAbsTotalYazTime(), i_Loan.getAbsPaysEveryYaz(),
-                    i_Loan.getAbsIntristPerPayment(), m_CurrentTimeUnit.getCurrentTimeUnit(),i_Loan.getAbsCategory()));
+ //           BankAccount loanOwner = findBankAccountByName(i_Loan.getAbsOwner());
+            addLoan(i_Loan.getId(), i_Loan.getAbsOwner(), i_Loan.getAbsCapital(), i_Loan.getAbsTotalYazTime(), i_Loan.getAbsPaysEveryYaz(),
+                    i_Loan.getAbsIntristPerPayment(), i_Loan.getAbsCategory());
+//            m_LoanList.add(new Loan(i_Loan.getId(), loanOwner, i_Loan.getAbsCapital(), i_Loan.getAbsTotalYazTime(), i_Loan.getAbsPaysEveryYaz(),
+//                    i_Loan.getAbsIntristPerPayment(), m_CurrentTimeUnit.getCurrentTimeUnit(),i_Loan.getAbsCategory()));
         }
     }
 
@@ -188,7 +190,7 @@ public class BankingSystem implements LogicInterface{
         boolean categoryExist = false;
 
         for (String i_Category:m_LoanCategoryList) {
-            if (i_Category == i_CategoryToCheck) {
+            if (i_Category.equals(i_CategoryToCheck)) {
                 categoryExist = true;
             }
         }
