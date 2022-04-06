@@ -4,7 +4,7 @@ import java.sql.Time;
 
 public class Payment {
     private double m_SumLeftToPay;  // m_InitialSumLeftToPay + m_InterestLeftToPay
-    private double m_FundLeftToPay; // KEREN - Fund TODO: delete
+    private double m_FundLeftToPay; // KEREN - Fund
     private double m_InterestLeftToPay; // RIBIT - Interest
     private final double f_FundToPayEveryTimeUnit;
     private final double f_InterestToPayEveryTimeUnit;
@@ -12,19 +12,17 @@ public class Payment {
     private final double f_InitialFund;
     private final double f_InitialInterest;
 
-    //TODO: add YAZ when happened
 
     public Payment(double i_InitialSum, double i_InitialInterest, double i_SumOfTimeUnit, double i_TimeUnitsBetweenPayments) {
         double timeUnitsToPay = i_SumOfTimeUnit / i_TimeUnitsBetweenPayments;
         f_InitialFund = m_FundLeftToPay = i_InitialSum;
         f_InitialInterest = m_InterestLeftToPay = i_InitialInterest * i_InitialSum;
         m_SumLeftToPay = m_FundLeftToPay + m_InterestLeftToPay;
-        f_InterestToPayEveryTimeUnit = i_SumOfTimeUnit / timeUnitsToPay;
-        f_FundToPayEveryTimeUnit = i_SumOfTimeUnit / timeUnitsToPay;
+        f_FundToPayEveryTimeUnit = i_InitialSum / timeUnitsToPay;
+        f_InterestToPayEveryTimeUnit = f_InitialInterest / timeUnitsToPay;
         f_SumToPayEveryTimeUnit = f_FundToPayEveryTimeUnit + f_InterestToPayEveryTimeUnit;
     }
 
-    //TODO: add amount to pay, it is not the same amount every timeunit?
     public void addPayment() {
         m_FundLeftToPay -= f_FundToPayEveryTimeUnit;
         m_InterestLeftToPay -= f_InterestToPayEveryTimeUnit;

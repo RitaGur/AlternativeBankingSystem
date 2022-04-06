@@ -2,8 +2,11 @@ package DTO.loan;
 
 import bankingSystem.timeline.loan.Loan;
 import bankingSystem.timeline.loan.PartInLoan;
+import bankingSystem.timeline.loan.PaymentInfo;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class LoanInformationDTO {
@@ -28,6 +31,8 @@ public class LoanInformationDTO {
     private double interestLeftToPay;
     private int nextPaymentTimeUnit;
     private double sumAmountToPayEveryTimeUnit;
+    private List<PaymentsDTO> paymentsListInDTO;
+    private int lastPaymentTimeunit;
 
     public LoanInformationDTO(Loan loan) {
         loanNameID = loan.getLoanNameID();
@@ -51,6 +56,19 @@ public class LoanInformationDTO {
         pendingMoney = loan.getPendingMoney();
         nextPaymentTimeUnit = loan.getLastPaidTimeUnit() + timeUnitsBetweenPayments; //Todo: check if correct
         sumAmountToPayEveryTimeUnit = loan.sumAmountToPayEveryTimeUnit();
+        paymentsListInDTO = paymentsListInDTO(loan.getPaymentInfoList());
+        lastPaymentTimeunit = loan.getLastPaidTimeUnit();
+    }
+
+    private List<PaymentsDTO> paymentsListInDTO(List<PaymentInfo> i_paymentsInfoSet) {
+        List<PaymentsDTO> listToReturn = new ArrayList<>();
+
+        for (PaymentInfo i_PaymentInfo : i_paymentsInfoSet) {
+            listToReturn.add(new PaymentsDTO(i_PaymentInfo.getPaymentTimeUnit(), i_PaymentInfo.getFundPayment(),
+                    i_PaymentInfo.getInterestPayment(), i_PaymentInfo.getPaymentSum()));
+        }
+
+        return listToReturn;
     }
 
     private Set<PartInLoanDTO> lenderSetAndAmountInDTO(Set<PartInLoan> i_LenderSetAndAmount) {
@@ -61,6 +79,10 @@ public class LoanInformationDTO {
         }
 
         return setToReturn;
+    }
+
+    public int getLastPaymentTimeunit() {
+        return lastPaymentTimeunit;
     }
 
     public String getLoanNameID() {
@@ -147,4 +169,7 @@ public class LoanInformationDTO {
         return sumAmountToPayEveryTimeUnit;
     }
 
+    public List<PaymentsDTO> getPaymentsList() {
+        return paymentsListInDTO;
+    }
 }

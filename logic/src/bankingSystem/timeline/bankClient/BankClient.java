@@ -67,8 +67,12 @@ public class BankClient implements BankAccount {
     }
 
     @Override
-    public void addAsLoanOwner(Loan loanToAdd) {
+    public void addAsLoanOwner(Loan loanToAdd) { //as borrower
         m_ClientAsBorrowerSet.add(loanToAdd);
+    }
+
+    public void addAsLender(Loan loanToAdd) {
+        m_ClientAsLenderSet.add(loanToAdd);
     }
 
     public Set<Loan> getClientAsLenderSet() {

@@ -4,6 +4,7 @@ import DTO.client.ClientInformationDTO;
 import DTO.client.RecentTransactionDTO;
 import DTO.loan.LoanInformationDTO;
 import DTO.loan.PartInLoanDTO;
+import DTO.loan.PaymentsDTO;
 import bankingSystem.BankingSystem;
 import bankingSystem.LogicInterface;
 import bankingSystem.generated.*;
@@ -15,9 +16,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.File;
 import java.sql.Time;
-import java.util.HashSet;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 
 public class ConsoleStart {
 
@@ -129,35 +128,26 @@ public class ConsoleStart {
     private void loansDistribution() throws Exception {
         String userAccountInputString, categories;
         Scanner scanUserInput = new Scanner(System.in);
-      //  Set<ClientInformationDTO> clientInfoList = m_Engine.showClientsInformation();
         int counter = 1, amountOfMoneyToInvest = -1, interest = -1, minimumTotalTimeunits = -1;
 
+        //userAccountInputString = accountNameFromUser(); TODO: do methods for clean code
+        //categories = categoriesListFromUser();
+        //amountOfMoneyToInvest =
+        
         System.out.println("Please choose the account you would like to add an investment to (enter full name):");
         printClientsNameAndAmount();
 
-/*        for (ClientInformationDTO clientDTO: clientInfoList) {
-            System.out.println(counter++ + ")Client Name:" + clientDTO.getClientName());
-            System.out.println("  Account Balance: " + clientDTO.getClientBalance());
-        }
-        counter = 1;*/
-
         userAccountInputString = scanUserInput.nextLine(); //TODO: checkValidation
+        
         System.out.println("Please enter the amount of money you would like to invest (required field):");
         amountOfMoneyToInvest = Integer.parseInt(scanUserInput.nextLine());
         //TODO: checkAmountOfMoneyToInvest - while/try catch
 
         printCategoriesMessageAndLoanCategories();
-        /*System.out.println("Please choose categories for your investment:");
-        System.out.println("You can choose as many as you prefer, or none. For example: 1 2 3 / 0");//TODO: check the format
-        System.out.println("In case you don't choose any category, the system would offer you any loan, regardless it's category. ");
-        for (String category : m_Engine.getLoanCategoryList()) {
-            System.out.println(counter++ + ")" + category);
-        }*/
-
         categories = scanUserInput.nextLine();
 
-        System.out.println("Please fill the interest you would like to get (decimal number bigger than 0): ");
-        System.out.println("In case you don't fill this field, the system would offer you any loan, regardless it's interest.");
+        System.out.println("Please fill the minimum interest you would like to get (decimal number bigger between 0-100): ");
+        System.out.println("In case you choose 0, the system would offer you any loan, regardless it's interest.");
         interest = Integer.parseInt(scanUserInput.nextLine());
 
         System.out.println("Please fill minimum total timeunits for a loan (Integer):");
@@ -176,15 +166,29 @@ public class ConsoleStart {
         stringToPrint += "You can choose as many as you prefer. For example; 1 2 3\n";
 
         stringToPrint += printLoansOptions(loansOptions);
-       /* counter = 1;
-        for (LoanInformationDTO loanOption : loansOptions) {
-            stringToPrint += counter++ + ")\n";
-            stringToPrint += clientLoansInformationString(loanOption) + "\n";
-        }
-        counter = 1;*/
         System.out.println(stringToPrint);
 
         String chosenLoans = scanUserInput.nextLine();
+        Set<LoanInformationDTO> chosenLoansSet = fillChosenLoans(chosenLoans, loansOptions);
+        // part where we distribute the money between the loans the user chose
+        m_Engine.loansDistribution(chosenLoansSet, amountOfMoneyToInvest, userAccountInputString);
+        System.out.println("Your investment money was distributed successfully!");
+        System.out.println("You can now see the changes in options 2,3 of the system.");
+        System.out.println();
+    }
+
+    private Set<LoanInformationDTO> fillChosenLoans(String chosenLoans, Set<LoanInformationDTO> loansOptions) {
+        Set<LoanInformationDTO> setToReturn = new HashSet<>();
+        StringTokenizer numbers = new StringTokenizer(chosenLoans);
+        int numberInInt;
+        Object[] loansOptionsArr = loansOptions.toArray();
+
+        while (numbers.hasMoreTokens()) {
+            numberInInt = Integer.parseInt(numbers.nextToken());
+            setToReturn.add((LoanInformationDTO)loansOptionsArr[numberInInt-1]);
+        }
+
+        return setToReturn;
     }
 
     private String printLoansOptions(Set<LoanInformationDTO> loansOptions) {
@@ -423,7 +427,7 @@ public class ConsoleStart {
                      "Loan Sum: " + singleLoanInformation.getLoanStartSum() + "\n" +
                      "Loan Time Duration: " + singleLoanInformation.getLoanSumOfTimeUnit() + "\n" +
                      "Loan Interest: " + (int)(singleLoanInformation.getLoanInterest() * 100) + "%" + "\n" +
-                     "Timeunits between payments: " + singleLoanInformation.getTimeUnitsBetweenPayments();
+                     "Timeunits between payments: " + singleLoanInformation.getTimeUnitsBetweenPayments() + "\n";
         stringToPrint += printByLoanStatus(singleLoanInformation.getLoanStatus(), singleLoanInformation);
 
         System.out.println(stringToPrint);
@@ -457,7 +461,7 @@ public class ConsoleStart {
 
         stringToReturn += "Beginning Time Unit: " + singleLoanInformation.getBeginningTimeUnit() + "\n";
         stringToReturn += "Ending Time Unit: " + singleLoanInformation.getEndingTimeUnit() + "\n";
-        // TODO: information about previous payments
+        stringToReturn += loanPaymentsString(singleLoanInformation);
 
         return stringToReturn;
     }
@@ -471,13 +475,28 @@ public class ConsoleStart {
 
     private String activeStatus(LoanInformationDTO singleLoanInformation) {
         String stringToReturn = lendersPartInLoanString(singleLoanInformation);
-        // TODO: information about previous payments
-
+        stringToReturn += "Beginning Timeunit: " + singleLoanInformation.getBeginningTimeUnit() + "\n";
+        stringToReturn += "Next Payment Timeunit: " + (singleLoanInformation.getLastPaymentTimeunit() + singleLoanInformation.getTimeUnitsBetweenPayments()) + "\n"; //TODO: check if correct
+        stringToReturn += loanPaymentsString(singleLoanInformation);
         stringToReturn += "Paid Fund Amount: " + singleLoanInformation.getPaidFund() + "\n";
         stringToReturn += "Paid Interest Amount: " + singleLoanInformation.getPaidInterest() + "\n";
         stringToReturn += "Fund Left To Pay Amount: " + singleLoanInformation.getFundLeftToPay() + "\n";
         stringToReturn += "Interest Left To Pay Amount: " + singleLoanInformation.getInterestLeftToPay() + "\n";
 
+        return stringToReturn;
+    }
+
+    private String loanPaymentsString(LoanInformationDTO singleLoanInformation) {
+        String stringToReturn = "*****Payments Details*****\n";
+        List<PaymentsDTO> loanPayments = singleLoanInformation.getPaymentsList();
+
+        for (PaymentsDTO singleLoanPayment : loanPayments) {
+            stringToReturn += "Payment Timeunit: " + singleLoanPayment.getPaymentTimeUnit() + "\n";
+            stringToReturn += "Fund Amount: " + singleLoanPayment.getFundPayment()+ "\n";
+            stringToReturn += "Interest Amount: " + singleLoanPayment.getInterestPayment() + "\n";
+            stringToReturn += "Sum Amount(Fund + Interest): " + singleLoanPayment.getPaymentSum() + "\n";
+        }
+        stringToReturn += "*****End of Payment Details*****\n";
         return stringToReturn;
     }
 
@@ -493,7 +512,7 @@ public class ConsoleStart {
     }
 
     private String lendersPartInLoanString(LoanInformationDTO singleLoanInformation) {
-        String stringToReturn = "Lenders Information\n";
+        String stringToReturn = "*****Lenders Information:*****\n";
         int counter = 1;
 
         for (PartInLoanDTO singlePartInLoanDTO : singleLoanInformation.getLenderSetAndAmounts()) {
@@ -502,6 +521,7 @@ public class ConsoleStart {
             stringToReturn += "Lender amount in loan: " + singlePartInLoanDTO.getAmountOfLoan() + "\n";
         }
         counter = 1;
+        stringToReturn += "*****End of Lenders Information*****\n";
         return stringToReturn;
     }
 

@@ -7,6 +7,7 @@ import bankingSystem.timeline.TimeUnit;
 import bankingSystem.timeline.bankAccount.BankAccount;
 import bankingSystem.timeline.bankClient.BankClient;
 import bankingSystem.timeline.loan.Loan;
+import bankingSystem.timeline.loan.LoanStatus;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -55,11 +56,6 @@ public class BankingSystem implements LogicInterface {
         }
     }
 
-
-    /*public void loansDistribution(int i_InvestSum, LoanCategory i_LoanCategory, int i_MinInterest, int i_MinTimeUnits, int i_MaxOwnershipPercentage, int i_MaxOpenLoans) {
-
-    }*/
-
     @Override
     public void promoteTimeline() {
         m_CurrentTimeUnit.addOneToTimeUnit();
@@ -71,7 +67,6 @@ public class BankingSystem implements LogicInterface {
 
     @Override
     public void readFromFile(String fileName) throws Exception {
-        // parameter - time unit for LoanObject - loan beginning timiUnit
         try {
             File file;
             file = new File(fileName);
@@ -144,7 +139,6 @@ public class BankingSystem implements LogicInterface {
     @Override
     public void addMoneyToAccount(String i_ClientAccount, int i_AmountToAdd) throws Exception {
         BankAccount accountToAddMoney = findBankAccountByName(i_ClientAccount);
-        //accountToAddMoney.addMoneyToAccount(i_AmountToAdd);
         accountToAddMoney.addLastTransaction(i_AmountToAdd, m_CurrentTimeUnit.getCurrentTimeUnit());
         accountToAddMoney.addMoneyToAccount(i_AmountToAdd);
     }
@@ -152,14 +146,57 @@ public class BankingSystem implements LogicInterface {
     @Override
     public void withdrawMoneyFromAccount(String i_ClientAccount, int i_AmountToReduce) throws Exception {
         BankAccount accountToReduceMoney = findBankAccountByName(i_ClientAccount);
-        //accountToReduceMoney.withdrawMoneyFromAccount(i_AmountToReduce);
         accountToReduceMoney.addLastTransaction(i_AmountToReduce * (-1), m_CurrentTimeUnit.getCurrentTimeUnit());
         accountToReduceMoney.withdrawMoneyFromAccount(i_AmountToReduce);
     }
 
     @Override
-    public void loansDistribution(Set<LoanInformationDTO> chosenLoans, int amountOfMoneyToInvest) {
+    public void loansDistribution(Set<LoanInformationDTO> chosenLoans, int amountOfMoneyToInvest, String lenderName) throws Exception {
+        int smallerPartAmount = (amountOfMoneyToInvest / chosenLoans.size());
+        int biggerPartAmount = smallerPartAmount + 1;
+        int bigParts = amountOfMoneyToInvest % chosenLoans.size();
+        Object[] chosenLoansArr = chosenLoans.toArray();
+        int arrIndex = 0;
+        BankClient lender = findBankAccountByName(lenderName);
 
+        for (int i = 0; i < bigParts; i++) {
+            checkLenderPartForLoan((LoanInformationDTO)chosenLoansArr[arrIndex++], biggerPartAmount, lender);
+        }
+
+        for (int i = 0; i < (chosenLoans.size() - bigParts); i++) {
+            checkLenderPartForLoan((LoanInformationDTO)chosenLoansArr[arrIndex++], smallerPartAmount, lender);
+        }
+    }
+
+    private void checkLenderPartForLoan(LoanInformationDTO chosenLoan, int lenderAmount, BankClient lender) throws Exception {
+        Loan loan = findLoanById(chosenLoan.getLoanNameID());
+        int finalAmountForLoan = 0;
+        if (loan == null) {
+            throw new Exception("There wasn't any loan found by this ID, check chosen loan array.");
+        }
+        if (loan.getLoanStatus() == LoanStatus.NEW) {
+            finalAmountForLoan = (loan.getLoanStartSum() <= lenderAmount) ? loan.getLoanStartSum() : lenderAmount;
+        }
+        else if (loan.getLoanStatus() == LoanStatus.PENDING) {
+            int moneyLeftToRaise = loan.getLoanStartSum() - loan.getPendingMoney();
+            finalAmountForLoan = moneyLeftToRaise >= lenderAmount ? lenderAmount : moneyLeftToRaise;
+        }
+
+        loan.addToPendingMoney(finalAmountForLoan, m_CurrentTimeUnit.getCurrentTimeUnit());
+        loan.addLender(lender, finalAmountForLoan);
+        withdrawMoneyFromAccount(lender.getClientName(), finalAmountForLoan); // take the money from the lender
+    }
+
+    private Loan findLoanById(String loanNameID) {
+        Loan loanToReturn = null;
+        for (Loan loan : m_LoanList) {
+            if (loan.getLoanNameID().equals(loanNameID)) {
+                loanToReturn = loan;
+                break;
+            }
+        }
+
+        return loanToReturn;
     }
 
     @Override
@@ -219,10 +256,12 @@ public class BankingSystem implements LogicInterface {
             }
             for (Loan loanOfBankingSystem : m_LoanList) {
                 //check our client is not the loan owner
-                if (!loanOfBankingSystem.getLoanOwner().getClientName().equals(clientName)) {
+                if (!loanOfBankingSystem.getLoanOwner().getClientName().equals(clientName) &&
+                        (loanOfBankingSystem.getLoanStatus() == LoanStatus.NEW ||
+                                loanOfBankingSystem.getLoanStatus()== LoanStatus.PENDING)) {
                     if (chosenCategories.contains(loanOfBankingSystem.getLoanCategory()) || chosenCategories.size() == 0) { //what if null?
-                        if (interest >= (loanOfBankingSystem.getInterest()*100) || interest == -1) {
-                            if (minimumTotalTimeunits >= loanOfBankingSystem.getSumOfTimeUnit()) {
+                        if (interest <= (loanOfBankingSystem.getInterest()*100) || interest == 0) {
+                            if (minimumTotalTimeunits <= loanOfBankingSystem.getSumOfTimeUnit()) {
                                 optionLoansSet.add(new LoanInformationDTO(loanOfBankingSystem));
                             }
                         }

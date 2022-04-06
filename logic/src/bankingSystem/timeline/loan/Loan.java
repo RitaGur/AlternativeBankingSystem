@@ -3,7 +3,9 @@ package bankingSystem.timeline.loan;
 import bankingSystem.timeline.bankAccount.BankAccount;
 import bankingSystem.timeline.bankClient.BankClient;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class Loan {
@@ -13,18 +15,14 @@ public class Loan {
     private final int f_SumOfTimeUnit; // how many yaz - loan duration
     private final int f_TimeUnitsBetweenPayment; // how often (by yaz) you pay
     private final double f_Interest; //ribit - decimal number (0, 100]
-    private Payment m_Payment; //TODO: list?
+    private Payment m_Payment;
     private Set<PartInLoan> m_LendersAndAmountsSet;
     private LoanStatus m_LoanStatus;
     private int m_PendingMoney = 0; // raised money before activation
     private int m_BeginningTimeUnit;
-
-    public int getLastPaidTimeUnit() {
-        return m_LastPaidTimeUnit;
-    }
-
     private int m_LastPaidTimeUnit = 0;
     private final String f_LoanCategory;
+    private List<PaymentInfo> m_PaymentInfoList;
 
     public Loan(String i_LoanNameID, BankAccount i_LoanOwner, int i_LoanStartSum, int i_SumOfTimeUnit,
                 int i_HowOftenToPay, double i_Interest, int i_LoanBeginningTimeUnit, String i_LoanCategory) {
@@ -39,14 +37,24 @@ public class Loan {
         m_LoanStatus = LoanStatus.NEW;
         m_BeginningTimeUnit = i_LoanBeginningTimeUnit;
         f_LoanCategory = i_LoanCategory;
+        m_PaymentInfoList = new ArrayList<>();
+    }
+
+    public int getLastPaidTimeUnit() {
+        return m_LastPaidTimeUnit;
     }
 
     public int howManyTimeUnitsLeftForLoan(int i_CurrentTimeUnit) {
         return f_SumOfTimeUnit - i_CurrentTimeUnit;
     }
 
-    public void addLender(BankClient i_NewLender, int i_AmountOfLoan) { //TODO: use in shibutz method
+    public void addLender(BankClient i_NewLender, int i_AmountOfLoan) {
         m_LendersAndAmountsSet.add(new PartInLoan(i_NewLender, i_AmountOfLoan));
+        i_NewLender.addAsLender(this);
+    }
+
+    public void addPaymentToPaymentInfoList(int paymentTimeUnit) {
+        m_PaymentInfoList.add(new PaymentInfo(paymentTimeUnit, (int)m_Payment.getFundToPayEveryTimeUnit(), (int)m_Payment.getInterestToPayEveryTimeUnit(), (int)m_Payment.getSumToPayEveryTimeUnit()));
     }
 
     public void timeUnitPayment() { // as monthly payment
@@ -121,6 +129,10 @@ public class Loan {
         return f_TimeUnitsBetweenPayment;
     }
 
+    public List<PaymentInfo> getPaymentInfoList() {
+        return m_PaymentInfoList;
+    }
+
     public void changeLoanStatus(LoanStatus i_LoanStatus) {
         m_LoanStatus = i_LoanStatus;
     }
@@ -141,9 +153,12 @@ public class Loan {
     private void updateLoanStatusToActive(int i_BeginningTimeUnit) {
         if (m_PendingMoney == f_LoanStartSum) {
             m_LoanStatus = LoanStatus.ACTIVE;
-            f_LoanOwner.addMoneyToAccount(m_PendingMoney);
+            f_LoanOwner.addMoneyToAccount(m_PendingMoney); //pay to borrower
             m_PendingMoney = 0;
             m_BeginningTimeUnit = i_BeginningTimeUnit;
+            m_Payment.addPayment();
+            addPaymentToPaymentInfoList(i_BeginningTimeUnit);
+            m_LastPaidTimeUnit = i_BeginningTimeUnit;
         }
     }
 
@@ -165,7 +180,6 @@ public class Loan {
         for (PartInLoan i_PartInLoan: m_LendersAndAmountsSet) {
             i_PartInLoan.getLender().addMoneyToAccount(m_Payment.getSumToPayEveryTimeUnit());
         }
-
     }
 
     public double sumAmountToPayEveryTimeUnit() {
