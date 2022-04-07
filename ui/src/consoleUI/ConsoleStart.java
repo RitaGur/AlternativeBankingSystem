@@ -6,16 +6,7 @@ import DTO.loan.LoanInformationDTO;
 import DTO.loan.PartInLoanDTO;
 import DTO.loan.PaymentsDTO;
 import bankingSystem.BankingSystem;
-import bankingSystem.LogicInterface;
-import bankingSystem.generated.*;
-import bankingSystem.timeline.TimeUnit;
 import exception.ValueOutOfRangeException;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-import java.io.File;
-import java.sql.Time;
 import java.util.*;
 
 public class ConsoleStart {
@@ -36,14 +27,6 @@ public class ConsoleStart {
 
     //TODO: delete throws Exception!!
     private void startService() throws Exception {
-//        Set<String> categories = new HashSet<>();
-//        categories.add("abc");
-//        categories.add("drf");
-//        m_Engine.updateLoansCategories(categories);
-//        // TODO: delete
-//        m_Engine.addBankClient(5000, "Menash");
-//        m_Engine.addLoan("Stock market intro", "Menash", 2400, 12, 1, 5, "abc");
-
         showMenu();
         String userInputString;
         int userInputInt = 0;
@@ -121,10 +104,11 @@ public class ConsoleStart {
         System.exit(0);
     }
 
-    private void promoteTimeline() {
-        System.out.println("Previous Timeunit: " + m_Engine.getCurrentTimeUnit());
+    private void promoteTimeline() throws Exception {
+        System.out.println("Previous Timeunit: " + m_Engine.getCurrentTimeUnit().getCurrentTimeUnit());
         m_Engine.promoteTimeline();
-        System.out.println("Current Timeunit: " + m_Engine.getCurrentTimeUnit());
+        System.out.println("Current Timeunit: " + m_Engine.getCurrentTimeUnit().getCurrentTimeUnit());
+        System.out.println();
     }
 
     private void loansDistribution() throws Exception {
@@ -156,7 +140,7 @@ public class ConsoleStart {
         System.out.println("In case you don't fill this field, the system would offer you any loan, regardless it's total timeunits.");
         minimumTotalTimeunits = Integer.parseInt(scanUserInput.nextLine());
 
-        Set<LoanInformationDTO> loansOptions = m_Engine.optionsForLoans(userAccountInputString, categories, amountOfMoneyToInvest,
+        List<LoanInformationDTO> loansOptions = m_Engine.optionsForLoans(userAccountInputString, categories, amountOfMoneyToInvest,
                                                 interest, minimumTotalTimeunits);
 
         if(loansOptions.size() == 0) {
@@ -165,13 +149,13 @@ public class ConsoleStart {
         }
 
         String stringToPrint = "Please choose a loan from the options below:\n";
-        stringToPrint += "You can choose as many as you prefer. For example; 1 2 3\n";
+        stringToPrint += "You can choose as many as you prefer. For example: 1 2 3\n";
 
         stringToPrint += printLoansOptions(loansOptions);
         System.out.println(stringToPrint);
 
         String chosenLoans = scanUserInput.nextLine();
-        Set<LoanInformationDTO> chosenLoansSet = fillChosenLoans(chosenLoans, loansOptions);
+        List<LoanInformationDTO> chosenLoansSet = fillChosenLoans(chosenLoans, loansOptions);
         // part where we distribute the money between the loans the user chose
         m_Engine.loansDistribution(chosenLoansSet, amountOfMoneyToInvest, userAccountInputString);
         System.out.println("Your investment money was distributed successfully!");
@@ -179,8 +163,8 @@ public class ConsoleStart {
         System.out.println();
     }
 
-    private Set<LoanInformationDTO> fillChosenLoans(String chosenLoans, Set<LoanInformationDTO> loansOptions) {
-        Set<LoanInformationDTO> setToReturn = new HashSet<>();
+    private List<LoanInformationDTO> fillChosenLoans(String chosenLoans, List<LoanInformationDTO> loansOptions) {
+        List<LoanInformationDTO> setToReturn = new ArrayList<>();
         StringTokenizer numbers = new StringTokenizer(chosenLoans);
         int numberInInt;
         Object[] loansOptionsArr = loansOptions.toArray();
@@ -193,7 +177,7 @@ public class ConsoleStart {
         return setToReturn;
     }
 
-    private String printLoansOptions(Set<LoanInformationDTO> loansOptions) {
+    private String printLoansOptions(List<LoanInformationDTO> loansOptions) {
         String stringToPrint = "";
         int counter = 1;
         for (LoanInformationDTO loanOption : loansOptions) {
@@ -215,7 +199,7 @@ public class ConsoleStart {
     }
 
     private void printClientsNameAndAmount() {
-        Set<ClientInformationDTO> clientInfoList = m_Engine.showClientsInformation();
+        List<ClientInformationDTO> clientInfoList = m_Engine.showClientsInformation();
         int counter = 1;
 
         for (ClientInformationDTO clientDTO: clientInfoList) {
@@ -225,7 +209,7 @@ public class ConsoleStart {
     }
 
     private void withdrawMoney() throws Exception { //TODO: take care of duplicated code
-        Set<ClientInformationDTO> clientInfoList = m_Engine.showClientsInformation();
+        List<ClientInformationDTO> clientInfoList = m_Engine.showClientsInformation();
         int counter = 1;
         System.out.println("Please choose the account you would like to withdraw money from(enter full name): ");
 
@@ -248,7 +232,7 @@ public class ConsoleStart {
     }
 
     private void addMoney() throws Exception {
-        Set<ClientInformationDTO> clientInfoList = m_Engine.showClientsInformation();
+        List<ClientInformationDTO> clientInfoList = m_Engine.showClientsInformation();
         int counter = 1;
         System.out.println("Please choose the account you would like to add money to(enter full name): ");
 
@@ -289,7 +273,7 @@ public class ConsoleStart {
     }
 
     private void showClientsInformation() {
-        Set<ClientInformationDTO> clientInfo = m_Engine.showClientsInformation();
+        List<ClientInformationDTO> clientInfo = m_Engine.showClientsInformation();
         System.out.println("-----Clients Information-----");
         int counter = 1;
 
@@ -307,7 +291,7 @@ public class ConsoleStart {
         int counter = 1;
 
         // recent transactions:
-        Set<RecentTransactionDTO> recentTransactionList = singleClientInformation.getRecentTransactionList();
+        List<RecentTransactionDTO> recentTransactionList = singleClientInformation.getRecentTransactionList();
         stringToPrint += "*****Last Transactions*****\n";
         for (RecentTransactionDTO singleTransaction : recentTransactionList) {
             stringToPrint += "Transaction number " + counter++ + ":\n";
@@ -407,7 +391,7 @@ public class ConsoleStart {
     }
 
     private void showLoansInformation() {
-        Set<LoanInformationDTO> loanInfoList = m_Engine.showLoansInformation();
+        List<LoanInformationDTO> loanInfoList = m_Engine.showLoansInformation();
         System.out.println("-----Loans Information-----");
         int counter = 1;
 
@@ -470,8 +454,9 @@ public class ConsoleStart {
 
     private String riskStatus(LoanInformationDTO singleLoanInformation) {
         String stringToReturn = activeStatus(singleLoanInformation);
-        //TODO: information about unpaid payments
-
+        stringToReturn += loanPaymentsString(singleLoanInformation);
+        stringToReturn += "Number of unpaid payments: " + singleLoanInformation.getNumberOfUnpaidPayments() + "\n";
+        stringToReturn += "Sum of unpaid payments: " + singleLoanInformation.getAmountToPayNextPayment() + "\n";
         return stringToReturn;
     }
 
@@ -491,12 +476,19 @@ public class ConsoleStart {
     private String loanPaymentsString(LoanInformationDTO singleLoanInformation) {
         String stringToReturn = "*****Payments Details*****\n";
         List<PaymentsDTO> loanPayments = singleLoanInformation.getPaymentsList();
+        int counter = 1;
 
         for (PaymentsDTO singleLoanPayment : loanPayments) {
+            stringToReturn += "Payment number " + counter++ +":\n";
             stringToReturn += "Payment Timeunit: " + singleLoanPayment.getPaymentTimeUnit() + "\n";
             stringToReturn += "Fund Amount: " + singleLoanPayment.getFundPayment()+ "\n";
             stringToReturn += "Interest Amount: " + singleLoanPayment.getInterestPayment() + "\n";
             stringToReturn += "Sum Amount(Fund + Interest): " + singleLoanPayment.getPaymentSum() + "\n";
+            if (singleLoanInformation.getLoanStatus().toString().equals("RISK")) {
+                if (singleLoanPayment.isWasItPaid() == false) {
+                    stringToReturn += "NOT PAID!\n";
+                }
+            }
         }
         stringToReturn += "*****End of Payment Details*****\n";
         return stringToReturn;
@@ -536,6 +528,11 @@ public class ConsoleStart {
             System.out.println("The file was uploaded successfully!");
             System.out.println();
             isFileRead = true;
+
+            //TODO: delete!!
+            //FOR TESTS
+            m_Engine.addLoan("Test","Avrum", 2000, 12,1,5,"Renovate");
+            //FOR TESTS
         }
         catch (Exception e) {
             System.out.println(e.getMessage());
@@ -560,6 +557,7 @@ public class ConsoleStart {
     }
 
     private void showMenu() {
+        System.out.println("Current Timeunit: " + m_Engine.getCurrentTimeUnit().getCurrentTimeUnit());
         System.out.println("Please choose one of the following options:");
         System.out.println("1. Read system settings from a file");
         System.out.println("2. Show existing loans information");

@@ -1,7 +1,5 @@
 package DTO.loan;
 
-import bankingSystem.timeline.bankAccount.BankAccount;
-
 public class PartInLoanDTO {
     private final String m_LenderName;
     private final int m_AmountOfLoan;

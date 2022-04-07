@@ -16,16 +16,16 @@ import java.io.File;
 import java.util.*;
 
 public class BankingSystem implements LogicInterface {
-    private Set<BankClient> m_BankAccountList;
-    private Set<Loan> m_LoanList;
+    private List<BankClient> m_BankAccountList;
+    private List<Loan> m_LoanList;
     private TimeUnit m_CurrentTimeUnit;
-    private Set<String> m_LoanCategoryList;
+    private List<String> m_LoanCategoryList;
 
     public BankingSystem() {
-        m_BankAccountList = new HashSet<>();
-        m_LoanList = new HashSet<>();
+        m_BankAccountList = new ArrayList<>();
+        m_LoanList = new ArrayList<>();
         m_CurrentTimeUnit = new TimeUnit();
-        m_LoanCategoryList = new HashSet<>();
+        m_LoanCategoryList = new ArrayList<>();
     }
 
     @Override
@@ -57,27 +57,50 @@ public class BankingSystem implements LogicInterface {
     }
 
     @Override
-    public void promoteTimeline() {
+    public void promoteTimeline() throws Exception {
         m_CurrentTimeUnit.addOneToTimeUnit();
 
-        ArrayList<Loan> loansNeedToBePaidThisTimeunitList = whichLoansNeedToPayList();
-        // sort by yaz
-        Collections.sort(loansNeedToBePaidThisTimeunitList, new Comparator<Loan>() {
-            @Override
-            public int compare(Loan loan1, Loan loan2) {
-                return loan1.getBeginningTimeUnit() - loan2.getBeginningTimeUnit();
+        for (BankClient client : m_BankAccountList) {
+            ArrayList<Loan> loansNeedToBePaidThisTimeunitList = whichLoansNeedToPayListByBorrower(client);
+            if (loansNeedToBePaidThisTimeunitList.size() == 0) {
+                break;
             }
-        });
-        // sort by amount of loan payment
-        for (Loan loan : loansNeedToBePaidThisTimeunitList) {
 
-        }
-        for (Loan i_Loan : m_LoanList) {
-            i_Loan.checkIfPaymentNeededAndPay(m_CurrentTimeUnit.getCurrentTimeUnit());
+            // sort by yaz
+            Collections.sort(loansNeedToBePaidThisTimeunitList, new Comparator<Loan>() {
+                @Override
+                public int compare(Loan loan1, Loan loan2) {
+                    return loan1.getBeginningTimeUnit() - loan2.getBeginningTimeUnit();
+                }
+            });
+            // sort by amount of loan payment
+            Collections.sort(loansNeedToBePaidThisTimeunitList, new Comparator<Loan>() {
+                @Override
+                public int compare(Loan loan1, Loan loan2) {
+                    if (loan1.getBeginningTimeUnit() == loan2.getBeginningTimeUnit()) {
+                        return (int)(loan1.sumAmountToPayEveryTimeUnit() - loan2.sumAmountToPayEveryTimeUnit());
+                    }
+                    return 0;
+                }
+            });
+
+            for (Loan loan : loansNeedToBePaidThisTimeunitList) {
+                loan.checkIfPaymentNeededAndPay(m_CurrentTimeUnit.getCurrentTimeUnit());
+            }
         }
     }
 
+    private ArrayList<Loan> whichLoansNeedToPayListByBorrower(BankClient client) {
+        ArrayList<Loan> listToReturn = new ArrayList<>();
 
+        for (Loan loan : client.getClientAsBorrowerSet()) {
+            if (loan.isItPaymentTime(m_CurrentTimeUnit.getCurrentTimeUnit())) {
+                listToReturn.add(loan);
+            }
+        }
+
+        return listToReturn;
+    }
 
     private ArrayList<Loan> whichLoansNeedToPayList() {
         ArrayList<Loan> listToReturn = new ArrayList<>();
@@ -119,7 +142,7 @@ public class BankingSystem implements LogicInterface {
     }
 
     private void fillLoanList(List<AbsLoan> absLoan) throws Exception {
-        m_LoanList = new HashSet<>();
+        m_LoanList = new ArrayList<>();
         for (AbsLoan i_Loan : absLoan) {
             addLoan(i_Loan.getId(), i_Loan.getAbsOwner(), i_Loan.getAbsCapital(), i_Loan.getAbsTotalYazTime(), i_Loan.getAbsPaysEveryYaz(),
                     i_Loan.getAbsIntristPerPayment(), i_Loan.getAbsCategory());
@@ -127,22 +150,22 @@ public class BankingSystem implements LogicInterface {
     }
 
     private void fillBankClientsList(List<AbsCustomer> absCustomerList) {
-        m_BankAccountList = new HashSet<>();
+        m_BankAccountList = new ArrayList<>();
         for (AbsCustomer i_Customer : absCustomerList) {
             m_BankAccountList.add(new BankClient(i_Customer.getAbsBalance(), i_Customer.getName()));
         }
     }
 
     private void fromListToSetCategories(List<String> i_ListToConvert) {
-        m_LoanCategoryList = new HashSet<>();
+        m_LoanCategoryList = new ArrayList<>();
         for (String i_CategoryInList : i_ListToConvert) {
             m_LoanCategoryList.add(i_CategoryInList);
         }
     }
 
     @Override
-    public Set<LoanInformationDTO> showLoansInformation() {
-        Set<LoanInformationDTO> loanListToReturn = new HashSet<>();
+    public List<LoanInformationDTO> showLoansInformation() {
+        List<LoanInformationDTO> loanListToReturn = new ArrayList<>();
 
         for (Loan i_Loan : m_LoanList) {
             loanListToReturn.add(new LoanInformationDTO(i_Loan));
@@ -152,8 +175,8 @@ public class BankingSystem implements LogicInterface {
     }
 
     @Override
-    public Set<ClientInformationDTO> showClientsInformation() {
-        Set<ClientInformationDTO> clientsListToReturn = new HashSet<>();
+    public List<ClientInformationDTO> showClientsInformation() {
+        List<ClientInformationDTO> clientsListToReturn = new ArrayList<>();
 
         for (BankClient bankClient : m_BankAccountList) {
             clientsListToReturn.add(new ClientInformationDTO(bankClient));
@@ -175,7 +198,7 @@ public class BankingSystem implements LogicInterface {
     }
 
     @Override
-    public void loansDistribution(Set<LoanInformationDTO> chosenLoans, int amountOfMoneyToInvest, String lenderName) throws Exception {
+    public void loansDistribution(List<LoanInformationDTO> chosenLoans, int amountOfMoneyToInvest, String lenderName) throws Exception {
         int smallerPartAmount = (amountOfMoneyToInvest / chosenLoans.size());
         int biggerPartAmount = smallerPartAmount + 1;
         int bigParts = amountOfMoneyToInvest % chosenLoans.size();
@@ -206,9 +229,9 @@ public class BankingSystem implements LogicInterface {
             finalAmountForLoan = moneyLeftToRaise >= lenderAmount ? lenderAmount : moneyLeftToRaise;
         }
 
-        loan.addToPendingMoney(finalAmountForLoan, m_CurrentTimeUnit.getCurrentTimeUnit());
         loan.addLender(lender, finalAmountForLoan);
         lender.withdrawMoneyFromAccount(finalAmountForLoan, m_CurrentTimeUnit.getCurrentTimeUnit()); // take the money from the lender
+        loan.addToPendingMoney(finalAmountForLoan, m_CurrentTimeUnit.getCurrentTimeUnit());
     }
 
     private Loan findLoanById(String loanNameID) {
@@ -224,7 +247,7 @@ public class BankingSystem implements LogicInterface {
     }
 
     @Override
-    public void updateLoansCategories(Set<String> i_LoansCategories) {
+    public void updateLoansCategories(List<String> i_LoansCategories) {
         for (String i_Category : i_LoansCategories) {
             m_LoanCategoryList.add(i_Category);
         }
@@ -263,15 +286,15 @@ public class BankingSystem implements LogicInterface {
         return new ClientInformationDTO(clientAccount);
     }
 
-    public Set<String> getLoanCategoryList() {
+    public List<String> getLoanCategoryList() {
         return m_LoanCategoryList;
     }
 
-    public Set<LoanInformationDTO> optionsForLoans(String clientName, String categories, int amountOfMoneyToInvest,
+    public List<LoanInformationDTO> optionsForLoans(String clientName, String categories, int amountOfMoneyToInvest,
                                                    int interest, int minimumTotalTimeunits) throws Exception {
-        Set<LoanInformationDTO> optionLoansSet = new HashSet<>();
+        List<LoanInformationDTO> optionLoansSet = new ArrayList<>();
         BankAccount investClient = findBankAccountByName(clientName);
-        Set<String> chosenCategories = new HashSet<>();
+        List<String> chosenCategories = new ArrayList<>();
         fillChosenCategoriesList(chosenCategories, categories);
 
         try {
@@ -299,7 +322,7 @@ public class BankingSystem implements LogicInterface {
         return optionLoansSet;
     }
 
-    private void fillChosenCategoriesList(Set<String> chosenCategories, String categories) {
+    private void fillChosenCategoriesList(List<String> chosenCategories, String categories) {
         if (!categories.equals("0")) {
             StringTokenizer numbers = new StringTokenizer(categories);
             while (numbers.hasMoreTokens()) {

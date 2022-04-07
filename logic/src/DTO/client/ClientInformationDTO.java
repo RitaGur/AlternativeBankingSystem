@@ -5,15 +5,14 @@ import bankingSystem.timeline.bankAccount.RecentTransaction;
 import bankingSystem.timeline.bankClient.BankClient;
 import bankingSystem.timeline.loan.Loan;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class ClientInformationDTO {
     private final String clientName;
-    private Set<RecentTransactionDTO> recentTransactionList;
-    private Set<LoanInformationDTO> clientAsBorrowerLoanList;
-    private Set<LoanInformationDTO> clientAsLenderLoanList;
+    private List<RecentTransactionDTO> recentTransactionList;
+    private List<LoanInformationDTO> clientAsBorrowerLoanList;
+    private List<LoanInformationDTO> clientAsLenderLoanList;
     private double clientBalance;
 
     public ClientInformationDTO(BankClient bankClient) {
@@ -24,8 +23,8 @@ public class ClientInformationDTO {
         this.clientBalance = bankClient.getAccountBalance();
     }
 
-    private Set<LoanInformationDTO> clientLoanListDTO(Set<Loan> clientSet) {
-        Set<LoanInformationDTO> setToReturn = new HashSet<>();
+    private List<LoanInformationDTO> clientLoanListDTO(List<Loan> clientSet) {
+        List<LoanInformationDTO> setToReturn = new ArrayList<>();
 
         for (Loan loan : clientSet) {
             setToReturn.add(new LoanInformationDTO(loan));
@@ -34,8 +33,8 @@ public class ClientInformationDTO {
         return setToReturn;
     }
 
-    private Set<RecentTransactionDTO> recentTransactionListDTO(List<RecentTransaction> lastTransactions) {
-        Set<RecentTransactionDTO> setToReturn = new HashSet<>();
+    private List<RecentTransactionDTO> recentTransactionListDTO(List<RecentTransaction> lastTransactions) {
+        List<RecentTransactionDTO> setToReturn = new ArrayList<>();
 
         for (RecentTransaction recentTransaction : lastTransactions) {
             setToReturn.add(new RecentTransactionDTO(recentTransaction.getAmountOfTransaction(),recentTransaction.getBalanceBeforeTransaction(),
@@ -49,15 +48,15 @@ public class ClientInformationDTO {
         return clientName;
     }
 
-    public Set<RecentTransactionDTO> getRecentTransactionList() {
+    public List<RecentTransactionDTO> getRecentTransactionList() {
         return recentTransactionList;
     }
 
-    public Set<LoanInformationDTO> getClientAsBorrowerLoanList() {
+    public List<LoanInformationDTO> getClientAsBorrowerLoanList() {
         return clientAsBorrowerLoanList;
     }
 
-    public Set<LoanInformationDTO> getClientAsLenderLoanList() {
+    public List<LoanInformationDTO> getClientAsLenderLoanList() {
         return clientAsLenderLoanList;
     }
 

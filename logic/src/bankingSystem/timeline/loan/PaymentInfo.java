@@ -5,12 +5,14 @@ public class PaymentInfo {
     private final double fundPayment;
     private final double interestPayment;
     private final int paymentSum;
+    private boolean wasItPaid;
 
-    public PaymentInfo(int paymentTimeUnit, double fundAtPayment, double interestAtPayment, int paymentSum) {
+    public PaymentInfo(int paymentTimeUnit, double fundAtPayment, double interestAtPayment, int paymentSum, boolean wasItPaid) {
         this.paymentTimeUnit = paymentTimeUnit;
         this.fundPayment = fundAtPayment;
         this.interestPayment = interestAtPayment;
         this.paymentSum = paymentSum;
+        this.wasItPaid = wasItPaid;
     }
 
     public int getPaymentTimeUnit() {
@@ -27,5 +29,9 @@ public class PaymentInfo {
 
     public int getPaymentSum() {
         return paymentSum;
+    }
+
+    public boolean isWasItPaid() {
+        return wasItPaid;
     }
 }

@@ -5,9 +5,7 @@ import bankingSystem.timeline.loan.PartInLoan;
 import bankingSystem.timeline.loan.PaymentInfo;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class LoanInformationDTO {
     private final String loanNameID;
@@ -18,7 +16,7 @@ public class LoanInformationDTO {
     private final double loanInterest;
     private final int timeUnitsBetweenPayments;
     private final String loanStatus;
-    private Set<PartInLoanDTO> lenderSetAndAmounts;
+    private List<PartInLoanDTO> lenderSetAndAmounts;
     private int pendingMoney;
     private final int beginningTimeUnit;
     private final int endingTimeUnit;
@@ -33,6 +31,10 @@ public class LoanInformationDTO {
     private double sumAmountToPayEveryTimeUnit;
     private List<PaymentsDTO> paymentsListInDTO;
     private int lastPaymentTimeunit;
+    private double amountToPayNextPayment;
+    private double fundToPayNextPayment;
+    private double interestToPayNextPayment;
+    private int numberOfUnpaidPayments;
 
     public LoanInformationDTO(Loan loan) {
         loanNameID = loan.getLoanNameID();
@@ -58,6 +60,10 @@ public class LoanInformationDTO {
         sumAmountToPayEveryTimeUnit = loan.sumAmountToPayEveryTimeUnit();
         paymentsListInDTO = paymentsListInDTO(loan.getPaymentInfoList());
         lastPaymentTimeunit = loan.getLastPaidTimeUnit();
+        amountToPayNextPayment = loan.amountOfNextPayment();
+        fundToPayNextPayment = loan.fundOfNextPayment();
+        interestToPayNextPayment = loan.interestOfNextPayment();
+        numberOfUnpaidPayments = loan.howManyUnpaidPayments();
     }
 
     private List<PaymentsDTO> paymentsListInDTO(List<PaymentInfo> i_paymentsInfoSet) {
@@ -65,14 +71,14 @@ public class LoanInformationDTO {
 
         for (PaymentInfo i_PaymentInfo : i_paymentsInfoSet) {
             listToReturn.add(new PaymentsDTO(i_PaymentInfo.getPaymentTimeUnit(), i_PaymentInfo.getFundPayment(),
-                    i_PaymentInfo.getInterestPayment(), i_PaymentInfo.getPaymentSum()));
+                    i_PaymentInfo.getInterestPayment(), i_PaymentInfo.getPaymentSum(), i_PaymentInfo.isWasItPaid()));
         }
 
         return listToReturn;
     }
 
-    private Set<PartInLoanDTO> lenderSetAndAmountInDTO(Set<PartInLoan> i_LenderSetAndAmount) {
-        Set<PartInLoanDTO> setToReturn = new HashSet<>();
+    private List<PartInLoanDTO> lenderSetAndAmountInDTO(List<PartInLoan> i_LenderSetAndAmount) {
+        List<PartInLoanDTO> setToReturn = new ArrayList<>();
 
         for (PartInLoan i_PartInLoan : i_LenderSetAndAmount) {
             setToReturn.add(new PartInLoanDTO(i_PartInLoan.getLender().getClientName(), i_PartInLoan.getAmountOfLoan()));
@@ -117,7 +123,7 @@ public class LoanInformationDTO {
         return loanStatus;
     }
 
-    public Set<PartInLoanDTO> getLenderSetAndAmounts() {
+    public List<PartInLoanDTO> getLenderSetAndAmounts() {
         return lenderSetAndAmounts;
     }
 
@@ -171,5 +177,21 @@ public class LoanInformationDTO {
 
     public List<PaymentsDTO> getPaymentsList() {
         return paymentsListInDTO;
+    }
+
+    public double getAmountToPayNextPayment() {
+        return amountToPayNextPayment;
+    }
+
+    public double getFundToPayNextPayment() {
+        return fundToPayNextPayment;
+    }
+
+    public double getInterestToPayNextPayment() {
+        return interestToPayNextPayment;
+    }
+
+    public int getNumberOfUnpaidPayments() {
+        return numberOfUnpaidPayments;
     }
 }
