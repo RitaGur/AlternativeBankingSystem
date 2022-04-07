@@ -25,7 +25,7 @@ public class Loan {
     private List<PaymentInfo> m_PaymentInfoList;
 
     public Loan(String i_LoanNameID, BankAccount i_LoanOwner, int i_LoanStartSum, int i_SumOfTimeUnit,
-                int i_HowOftenToPay, double i_Interest, int i_LoanBeginningTimeUnit, String i_LoanCategory) {
+                int i_HowOftenToPay, double i_Interest, String i_LoanCategory) {
         f_LoanOwner = i_LoanOwner;
         f_LoanNameID = i_LoanNameID;
         f_LoanStartSum = i_LoanStartSum;
@@ -35,7 +35,7 @@ public class Loan {
         m_LendersAndAmountsSet = new HashSet<>();
         m_Payment = new Payment(f_LoanStartSum, f_Interest, f_SumOfTimeUnit, f_TimeUnitsBetweenPayment);
         m_LoanStatus = LoanStatus.NEW;
-        m_BeginningTimeUnit = i_LoanBeginningTimeUnit;
+        m_BeginningTimeUnit = -1;
         f_LoanCategory = i_LoanCategory;
         m_PaymentInfoList = new ArrayList<>();
     }
@@ -49,7 +49,7 @@ public class Loan {
     }
 
     public void addLender(BankClient i_NewLender, int i_AmountOfLoan) {
-        m_LendersAndAmountsSet.add(new PartInLoan(i_NewLender, i_AmountOfLoan));
+        m_LendersAndAmountsSet.add(new PartInLoan(i_NewLender, i_AmountOfLoan, f_LoanStartSum, m_Payment.getSumLeftToPay()));
         i_NewLender.addAsLender(this);
     }
 
@@ -107,7 +107,7 @@ public class Loan {
 
     public Set<PartInLoan> getLendersSet() {
         return m_LendersAndAmountsSet;
-    } // TODO: clone?
+    }
 
     public LoanStatus getLoanStatus() {
         return m_LoanStatus;
@@ -153,7 +153,7 @@ public class Loan {
     private void updateLoanStatusToActive(int i_BeginningTimeUnit) {
         if (m_PendingMoney == f_LoanStartSum) {
             m_LoanStatus = LoanStatus.ACTIVE;
-            f_LoanOwner.addMoneyToAccount(m_PendingMoney); //pay to borrower
+            f_LoanOwner.addMoneyToAccount(m_PendingMoney, i_BeginningTimeUnit); //pay to borrower
             m_PendingMoney = 0;
             m_BeginningTimeUnit = i_BeginningTimeUnit;
             m_Payment.addPayment();
@@ -166,19 +166,27 @@ public class Loan {
         m_LoanStatus = LoanStatus.PENDING;
     }
 
-    public void checkIfPaymentNeededAndPay(int i_CurrentTimeUnit) { // TODO: use in Banking System
-        if ((i_CurrentTimeUnit - (m_BeginningTimeUnit - 1) % f_TimeUnitsBetweenPayment) == 0 ) {
-            if (f_LoanOwner.getAccountBalance() >= m_Payment.getFundToPayEveryTimeUnit() + m_Payment.getInterestToPayEveryTimeUnit())
-            m_Payment.addPayment();
-            m_LastPaidTimeUnit = i_CurrentTimeUnit;
-            // TODO: add to lenders and whithdraw from borrower
+    public boolean isItPaymentTime(int i_CurrentTimeunit) {
+        return ((i_CurrentTimeunit - (m_BeginningTimeUnit - 1) % f_TimeUnitsBetweenPayment) == 0) &&
+                (m_LoanStatus == LoanStatus.ACTIVE || m_LoanStatus == LoanStatus.RISK);
+    }
 
+    public void checkIfPaymentNeededAndPay(int i_CurrentTimeUnit) {
+        if (m_LoanStatus == LoanStatus.ACTIVE || m_LoanStatus == LoanStatus.RISK) {
+            if ((i_CurrentTimeUnit - (m_BeginningTimeUnit - 1) % f_TimeUnitsBetweenPayment) == 0) {
+                if (f_LoanOwner.getAccountBalance() >= m_Payment.getFundToPayEveryTimeUnit() + m_Payment.getInterestToPayEveryTimeUnit())
+                    m_Payment.addPayment();
+                addPaymentToPaymentInfoList(i_CurrentTimeUnit);
+                m_LastPaidTimeUnit = i_CurrentTimeUnit;
+                takePaymentsFromBorrowerToLenders(i_CurrentTimeUnit);
+            }
         }
     }
 
-    public void payToLenders() {
-        for (PartInLoan i_PartInLoan: m_LendersAndAmountsSet) {
-            i_PartInLoan.getLender().addMoneyToAccount(m_Payment.getSumToPayEveryTimeUnit());
+    private void takePaymentsFromBorrowerToLenders(int i_currentTimeUnit) {
+        for (PartInLoan lenderPart : m_LendersAndAmountsSet) {
+            lenderPart.getLender().addMoneyToAccount(lenderPart.getAmountToReceiveEveryTimeUnit(), i_currentTimeUnit);
+            f_LoanOwner.withdrawMoneyFromAccount(lenderPart.getAmountToReceiveEveryTimeUnit(), i_currentTimeUnit);
         }
     }
 

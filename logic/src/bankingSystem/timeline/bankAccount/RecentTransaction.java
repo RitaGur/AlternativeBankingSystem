@@ -1,13 +1,13 @@
 package bankingSystem.timeline.bankAccount;
 
 public class RecentTransaction {
-    private final int f_AmountOfTransaction;
+    private final double f_AmountOfTransaction;
     private final double f_BalanceBeforeTransaction;
     private final double f_BalanceAfterTransaction;
     private final int f_TransactionTimeUnit;
     private final char f_KindOfTransaction;
 
-    public RecentTransaction(int i_AmountOfTransaction, double i_Balance, int i_TransactionTimeUnit) {
+    public RecentTransaction(double i_AmountOfTransaction, double i_Balance, int i_TransactionTimeUnit) {
         f_AmountOfTransaction = i_AmountOfTransaction;
         f_BalanceBeforeTransaction = i_Balance;
         f_BalanceAfterTransaction = f_BalanceBeforeTransaction + i_AmountOfTransaction;
@@ -19,7 +19,7 @@ public class RecentTransaction {
         return f_BalanceBeforeTransaction;
     }
 
-    public int getAmountOfTransaction() {
+    public double getAmountOfTransaction() {
         return f_AmountOfTransaction;
     }
 

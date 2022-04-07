@@ -48,7 +48,7 @@ public class BankingSystem implements LogicInterface {
     public void addLoan(String i_LoanID, String i_BorrowerName, int i_LoanStartSum, int i_SumOfTimeUnit, int i_HowOftenToPay, double i_Interest, String i_LoanCategory) throws Exception {
         BankAccount borrowerAccount = findBankAccountByName(i_BorrowerName);
         if (checkIfCategoryExists(i_LoanCategory)) {
-            Loan loanToAdd = new Loan(i_LoanID, borrowerAccount, i_LoanStartSum, i_SumOfTimeUnit, i_HowOftenToPay, i_Interest, m_CurrentTimeUnit.getCurrentTimeUnit(), i_LoanCategory);
+            Loan loanToAdd = new Loan(i_LoanID, borrowerAccount, i_LoanStartSum, i_SumOfTimeUnit, i_HowOftenToPay, i_Interest, i_LoanCategory);
             m_LoanList.add(loanToAdd);
             borrowerAccount.addAsLoanOwner(loanToAdd);
         } else {
@@ -60,9 +60,35 @@ public class BankingSystem implements LogicInterface {
     public void promoteTimeline() {
         m_CurrentTimeUnit.addOneToTimeUnit();
 
+        ArrayList<Loan> loansNeedToBePaidThisTimeunitList = whichLoansNeedToPayList();
+        // sort by yaz
+        Collections.sort(loansNeedToBePaidThisTimeunitList, new Comparator<Loan>() {
+            @Override
+            public int compare(Loan loan1, Loan loan2) {
+                return loan1.getBeginningTimeUnit() - loan2.getBeginningTimeUnit();
+            }
+        });
+        // sort by amount of loan payment
+        for (Loan loan : loansNeedToBePaidThisTimeunitList) {
+
+        }
         for (Loan i_Loan : m_LoanList) {
             i_Loan.checkIfPaymentNeededAndPay(m_CurrentTimeUnit.getCurrentTimeUnit());
         }
+    }
+
+
+
+    private ArrayList<Loan> whichLoansNeedToPayList() {
+        ArrayList<Loan> listToReturn = new ArrayList<>();
+
+        for (Loan loan : m_LoanList) {
+            if (loan.isItPaymentTime(m_CurrentTimeUnit.getCurrentTimeUnit())) {
+                listToReturn.add(loan);
+            }
+        }
+
+        return listToReturn;
     }
 
     @Override
@@ -139,15 +165,13 @@ public class BankingSystem implements LogicInterface {
     @Override
     public void addMoneyToAccount(String i_ClientAccount, int i_AmountToAdd) throws Exception {
         BankAccount accountToAddMoney = findBankAccountByName(i_ClientAccount);
-        accountToAddMoney.addLastTransaction(i_AmountToAdd, m_CurrentTimeUnit.getCurrentTimeUnit());
-        accountToAddMoney.addMoneyToAccount(i_AmountToAdd);
+        accountToAddMoney.addMoneyToAccount(i_AmountToAdd, m_CurrentTimeUnit.getCurrentTimeUnit());
     }
 
     @Override
     public void withdrawMoneyFromAccount(String i_ClientAccount, int i_AmountToReduce) throws Exception {
         BankAccount accountToReduceMoney = findBankAccountByName(i_ClientAccount);
         accountToReduceMoney.addLastTransaction(i_AmountToReduce * (-1), m_CurrentTimeUnit.getCurrentTimeUnit());
-        accountToReduceMoney.withdrawMoneyFromAccount(i_AmountToReduce);
     }
 
     @Override
@@ -184,7 +208,7 @@ public class BankingSystem implements LogicInterface {
 
         loan.addToPendingMoney(finalAmountForLoan, m_CurrentTimeUnit.getCurrentTimeUnit());
         loan.addLender(lender, finalAmountForLoan);
-        withdrawMoneyFromAccount(lender.getClientName(), finalAmountForLoan); // take the money from the lender
+        lender.withdrawMoneyFromAccount(finalAmountForLoan, m_CurrentTimeUnit.getCurrentTimeUnit()); // take the money from the lender
     }
 
     private Loan findLoanById(String loanNameID) {
@@ -291,5 +315,9 @@ public class BankingSystem implements LogicInterface {
             categoryIterator.next();
         }
         return categoryIterator.next();
+    }
+
+    public TimeUnit getCurrentTimeUnit() {
+        return m_CurrentTimeUnit;
     }
 }

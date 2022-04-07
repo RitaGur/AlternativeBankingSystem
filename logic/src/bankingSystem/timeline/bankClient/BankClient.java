@@ -29,12 +29,12 @@ public class BankClient implements BankAccount {
         return m_AccountBalance;
     }
 
-    @Override
+/*    @Override
     public void askForLoan(String i_LoanID, int i_LoanSum, int i_SumOfTimeUnit, int i_TimeUnitsBetweenPayments,
                            double i_Interest, int i_LoanBeginningTimeUnit, String i_LoanCategory) {
         m_ClientAsBorrowerSet.add(new Loan(i_LoanID, this, i_LoanSum, i_SumOfTimeUnit, i_TimeUnitsBetweenPayments,
                                    i_Interest, i_LoanBeginningTimeUnit, i_LoanCategory));
-    }
+    }*/
 
     @Override
     public void putMoneyInInvest() {
@@ -42,12 +42,14 @@ public class BankClient implements BankAccount {
     }
 
     @Override
-    public void addMoneyToAccount(double i_AmountToAdd) {
+    public void addMoneyToAccount(double i_AmountToAdd, int i_TransactionTimeUnit) {
+        m_RecentTransactionList.add(new RecentTransaction(i_AmountToAdd, m_AccountBalance, i_TransactionTimeUnit));
         m_AccountBalance += i_AmountToAdd;
     }
 
     @Override
-    public void withdrawMoneyFromAccount(double i_AmountToWithdraw) {
+    public void withdrawMoneyFromAccount(double i_AmountToWithdraw, int i_TransactionTimeUnit) {
+        m_RecentTransactionList.add(new RecentTransaction(i_AmountToWithdraw * (-1), m_AccountBalance, i_TransactionTimeUnit));
         m_AccountBalance -= i_AmountToWithdraw;
     }
 

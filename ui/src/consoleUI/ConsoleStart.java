@@ -122,7 +122,9 @@ public class ConsoleStart {
     }
 
     private void promoteTimeline() {
-
+        System.out.println("Previous Timeunit: " + m_Engine.getCurrentTimeUnit());
+        m_Engine.promoteTimeline();
+        System.out.println("Current Timeunit: " + m_Engine.getCurrentTimeUnit());
     }
 
     private void loansDistribution() throws Exception {
@@ -504,7 +506,6 @@ public class ConsoleStart {
         String stringToReturn = "";
 
         stringToReturn += lendersPartInLoanString(singleLoanInformation);
-
         stringToReturn += "Raised loan amount: " + singleLoanInformation.getPendingMoney() + "\n";
         stringToReturn += "Remaining loan amount to activate: " + (singleLoanInformation.getFundAmount() - singleLoanInformation.getPendingMoney()) + "\n";
 

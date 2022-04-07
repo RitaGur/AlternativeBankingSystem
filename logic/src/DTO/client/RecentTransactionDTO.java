@@ -1,13 +1,13 @@
 package DTO.client;
 
 public class RecentTransactionDTO {
-    private final int f_AmountOfTransaction;
+    private final double f_AmountOfTransaction;
     private final double f_BalanceBeforeTransaction;
     private final double f_BalanceAfterTransaction;
     private final int f_TransactionTimeUnit;
     private final char f_KindOfTransaction;
 
-    public RecentTransactionDTO(int f_AmountOfTransaction, double i_BalanceBeforeTransaction, double i_BalanceAfterTransaction, int i_TransactionTimeUnit, char i_KindOfTransaction) {
+    public RecentTransactionDTO(double f_AmountOfTransaction, double i_BalanceBeforeTransaction, double i_BalanceAfterTransaction, int i_TransactionTimeUnit, char i_KindOfTransaction) {
         this.f_AmountOfTransaction = f_AmountOfTransaction;
         this.f_BalanceBeforeTransaction = i_BalanceBeforeTransaction;
         this.f_BalanceAfterTransaction = i_BalanceAfterTransaction;
@@ -15,7 +15,7 @@ public class RecentTransactionDTO {
         this.f_KindOfTransaction = i_KindOfTransaction;
     }
 
-    public int getAmountOfTransaction() {
+    public double getAmountOfTransaction() {
         return f_AmountOfTransaction;
     }
 
