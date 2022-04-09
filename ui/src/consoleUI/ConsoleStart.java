@@ -6,6 +6,7 @@ import DTO.loan.LoanInformationDTO;
 import DTO.loan.PartInLoanDTO;
 import DTO.loan.PaymentsDTO;
 import bankingSystem.BankingSystem;
+import com.sun.xml.internal.ws.api.message.ExceptionHasMessage;
 import exception.ValueOutOfRangeException;
 
 import javax.xml.bind.JAXBException;
@@ -37,7 +38,7 @@ public class ConsoleStart {
         do {
             try{
                 userInputString = scanUserInput.next();
-                userInputInt = isValidInput(userInputString, 8, 1);
+                userInputInt = isValidInput(userInputString.trim(), 8, 1);
                 if (userInputInt != 1 &&  userInputInt != 8 && isFileRead == false) {
                     throw new Exception("A file was not read.");
                 }
@@ -114,35 +115,94 @@ public class ConsoleStart {
     }
 
     private void loansDistribution() throws Exception {
-        String userAccountInputString, categories;
+        List<ClientInformationDTO> clientInfoList = m_Engine.showClientsInformation();
+        String userAccountInputString = "", categories = "";
         Scanner scanUserInput = new Scanner(System.in);
         int counter = 1, amountOfMoneyToInvest = -1, interest = -1, minimumTotalTimeunits = -1;
+        boolean userInputCorrect = false;
 
         //userAccountInputString = accountNameFromUser(); TODO: do methods for clean code
         //categories = categoriesListFromUser();
         //amountOfMoneyToInvest =
-        
-        System.out.println("Please choose the account you would like to add an investment to (enter full name):");
-        printClientsNameAndAmount();
 
-        userAccountInputString = scanUserInput.nextLine(); //TODO: checkValidation
-        
-        System.out.println("Please enter the amount of money you would like to invest (required field):");
-        amountOfMoneyToInvest = Integer.parseInt(scanUserInput.nextLine());
-        //TODO: checkAmountOfMoneyToInvest - while/try catch
 
-        printCategoriesMessageAndLoanCategories();
-        categories = scanUserInput.nextLine();
+        while (!userInputCorrect) {
+            System.out.println("Please choose the account you would like to add an investment to (enter full name):");
+            printClientsNameAndAmount();
+            userAccountInputString = scanUserInput.nextLine(); //TODO: checkValidation
+            userInputCorrect = isUserInputExist(userAccountInputString.trim(), clientInfoList);
+            if (!userInputCorrect) {
+                System.out.println("This account does not exist, please try again.");
+            }
+        }
+        userInputCorrect = false;
 
-        System.out.println("Please fill the minimum interest you would like to get (Integer between 0-100): ");
-        System.out.println("In case you choose 0, the system would offer you any loan, regardless it's interest.");
-        interest = Integer.parseInt(scanUserInput.nextLine());
-
-        System.out.println("Please fill minimum total timeunits for a loan (Integer):");
-        System.out.println("In case you don't fill this field, the system would offer you any loan, regardless it's total timeunits.");
-        minimumTotalTimeunits = Integer.parseInt(scanUserInput.nextLine());
-
-        List<LoanInformationDTO> loansOptions = m_Engine.optionsForLoans(userAccountInputString, categories, amountOfMoneyToInvest,
+        while (!userInputCorrect) {
+            try {
+                System.out.println("Please enter the amount of money you would like to invest (required field):");
+                amountOfMoneyToInvest = Integer.parseInt(scanUserInput.nextLine());
+                userInputCorrect = checkUserInputInvestmentAmount(amountOfMoneyToInvest, userAccountInputString);
+                if (!userInputCorrect) {
+                    throw new Exception("There is not enough money in the account.");
+                }
+            }
+            catch (NumberFormatException numberEx) {
+                System.out.println("Invalid amount of money, please try again.");
+            }
+            catch(Exception ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+        List<String> chosenCategories = new ArrayList<>();
+        userInputCorrect = false;
+        while (!userInputCorrect) {
+            try {
+                printCategoriesMessageAndLoanCategories();
+                categories = scanUserInput.nextLine();
+                m_Engine.fillChosenCategoriesList(chosenCategories, categories);
+                userInputCorrect = true;
+            }
+            catch (NumberFormatException numberEx) {
+                System.out.println("Invalid input, should be numbers only.");
+            }
+            catch (Exception ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+        userInputCorrect = false;
+        while(!userInputCorrect) {
+            try {
+                System.out.println("Please fill the minimum interest you would like to get (Integer between 0-100): ");
+                System.out.println("In case you choose 0, the system would offer you any loan, regardless it's interest.");
+                interest = Integer.parseInt(scanUserInput.nextLine());
+                userInputCorrect = isInterestInputCorrect(interest);
+                if (!userInputCorrect) {
+                    System.out.println("Invalid input, the interest needs to be an integer between 0-100,");
+                }
+            }
+            catch (Exception ex) {
+                System.out.println("Invalid input, should be numbers only.");
+            }
+        }
+        userInputCorrect = false;
+        while (!userInputCorrect) {
+            try {
+                System.out.println("Please fill minimum total timeunits for a loan (Integer):");
+                System.out.println("In case you fill 0 in this field, the system would offer you any loan, regardless it's total timeunits.");
+                minimumTotalTimeunits = Integer.parseInt(scanUserInput.nextLine());
+                if (minimumTotalTimeunits < 0) {
+                    System.out.println("The minimum total timeunits needs to be a positive number.");
+                    userInputCorrect = false;
+                }
+                else {
+                    userInputCorrect = true;
+                }
+            }
+            catch (NumberFormatException numberEx) {
+                System.out.println("Invalid input, should be numbers only.");
+            }
+        }
+        List<LoanInformationDTO> loansOptions = m_Engine.optionsForLoans(userAccountInputString, chosenCategories, amountOfMoneyToInvest,
                                                 interest, minimumTotalTimeunits);
 
         if(loansOptions.size() == 0) {
@@ -150,22 +210,49 @@ public class ConsoleStart {
             return;
         }
 
-        String stringToPrint = "Please choose a loan from the options below:\n";
-        stringToPrint += "You can choose as many as you prefer. For example: 1 2 3\n";
+        userInputCorrect = false;
+        while (!userInputCorrect) {
+            try{
+                String stringToPrint = "Please choose a loan from the options below:\n";
+                stringToPrint += "You can choose as many as you prefer. For example: 1 2 3\n";
 
-        stringToPrint += printLoansOptions(loansOptions);
-        System.out.println(stringToPrint);
+                stringToPrint += printLoansOptions(loansOptions);
+                System.out.println(stringToPrint);
+                String chosenLoans = scanUserInput.nextLine();
+                List<LoanInformationDTO> chosenLoansSet = fillChosenLoans(chosenLoans, loansOptions);
+                // part where we distribute the money between the loans the user chose
+                m_Engine.loansDistribution(chosenLoansSet, amountOfMoneyToInvest, userAccountInputString);
+                System.out.println("Your investment money was distributed successfully!");
+                System.out.println("You can now see the changes in options 2,3 of the system.");
+                System.out.println();
+                userInputCorrect = true;
+            }
+            catch (NumberFormatException numberEx) {
+                System.out.println("Invalid input, should be numbers only.");
+            }
+            catch (Exception ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
 
-        String chosenLoans = scanUserInput.nextLine();
-        List<LoanInformationDTO> chosenLoansSet = fillChosenLoans(chosenLoans, loansOptions);
-        // part where we distribute the money between the loans the user chose
-        m_Engine.loansDistribution(chosenLoansSet, amountOfMoneyToInvest, userAccountInputString);
-        System.out.println("Your investment money was distributed successfully!");
-        System.out.println("You can now see the changes in options 2,3 of the system.");
-        System.out.println();
     }
 
-    private List<LoanInformationDTO> fillChosenLoans(String chosenLoans, List<LoanInformationDTO> loansOptions) {
+    private boolean checkUserInputInvestmentAmount(int amountOfMoneyToInvest, String clientNName) {
+        List<ClientInformationDTO> clientsList = m_Engine.showClientsInformation();
+
+        for (ClientInformationDTO singleClient : clientsList) {
+            if ((singleClient.getClientName().equals(clientNName)) && (amountOfMoneyToInvest > 0 && amountOfMoneyToInvest <= singleClient.getClientBalance()))
+                return true;
+        }
+
+        return false;
+    }
+
+    private boolean isInterestInputCorrect(int interest) {
+        return  (interest >= 0 && interest <= 100);
+    }
+
+    private List<LoanInformationDTO> fillChosenLoans(String chosenLoans, List<LoanInformationDTO> loansOptions) throws Exception {
         List<LoanInformationDTO> setToReturn = new ArrayList<>();
         StringTokenizer numbers = new StringTokenizer(chosenLoans);
         int numberInInt;
@@ -173,6 +260,9 @@ public class ConsoleStart {
 
         while (numbers.hasMoreTokens()) {
             numberInInt = Integer.parseInt(numbers.nextToken());
+            if (numberInInt > loansOptions.size() || numberInInt < 0) {
+                throw new Exception("There are no categories for the number: "+ numberInInt);
+            }
             setToReturn.add((LoanInformationDTO)loansOptionsArr[numberInInt-1]);
         }
 
@@ -210,59 +300,95 @@ public class ConsoleStart {
         }
     }
 
-    private void withdrawMoney() throws Exception { //TODO: take care of duplicated code
+    private void withdrawMoney() throws Exception {
         List<ClientInformationDTO> clientInfoList = m_Engine.showClientsInformation();
-        int counter = 1;
-        System.out.println("Please choose the account you would like to withdraw money from(enter full name): ");
-
-        for (ClientInformationDTO clientDTO: clientInfoList) {
-            System.out.println(counter++ + ")" + clientDTO.getClientName() + ", " + clientDTO.getClientBalance());
-        }
-        counter = 1;
-
-        String userAccountInputString;
+        String userAccountInputString = "";
         int userAccountInput, userAmountOfMoneyInput;
         Scanner scanUserInput = new Scanner(System.in);
-        userAccountInputString = scanUserInput.next();
+        boolean inputCorrect = false;
 
-        //TODO: try catch
-        System.out.println("Please enter the amount of money you would like to withdraw from the chosen account: ");
-        userAmountOfMoneyInput = scanUserInput.nextInt();
+        while (!inputCorrect) {
+            System.out.println("Please choose the account you would like to withdraw money from(enter full name): ");
+            printClientsNameAndBalance(clientInfoList);
+            userAccountInputString = scanUserInput.nextLine();
+            inputCorrect = isUserInputExist(userAccountInputString.trim(), clientInfoList);
+            if (!inputCorrect) {
+                System.out.println("This account does not exist, please try again.");
+            }
+        }
 
-        m_Engine.withdrawMoneyFromAccount(userAccountInputString, userAmountOfMoneyInput);
-        System.out.println("Money was withdrawed successfully. Current Account Balance is: " + m_Engine.clientInformationByName(userAccountInputString).getClientBalance());
-    }
+        inputCorrect = false;
+
+      while (!inputCorrect) {
+            try {
+                System.out.println("Please enter the amount of money you would like to withdraw from the chosen account: ");
+                userAmountOfMoneyInput = Integer.parseInt(scanUserInput.nextLine());
+
+                m_Engine.withdrawMoneyFromAccount(userAccountInputString, userAmountOfMoneyInput);
+                System.out.println("Money was withdrawed successfully. Current Account Balance is: " + m_Engine.clientInformationByName(userAccountInputString).getClientBalance());
+                inputCorrect = true;
+            }
+            catch (NumberFormatException numberFormatEx) {
+                System.out.println("Invalid input - Should be numbers only.");
+            }
+            catch (Exception ex) {
+                System.out.println(ex.getMessage());
+            }
+      }
+ }
 
     private void addMoney() throws Exception {
+        boolean inputCorrect = false;
+        String userAccountInputString = "";
+        int userAccountInput, userAmountOfMoneyInput;
+        Scanner scanUserInput = new Scanner(System.in);
         List<ClientInformationDTO> clientInfoList = m_Engine.showClientsInformation();
-        int counter = 1;
-        System.out.println("Please choose the account you would like to add money to(enter full name): ");
 
+        while (!inputCorrect) {
+            System.out.println("Please choose the account you would like to add money to(enter full name): ");
+            printClientsNameAndBalance(clientInfoList);
+            userAccountInputString = scanUserInput.nextLine();
+            inputCorrect = isUserInputExist(userAccountInputString.trim(), clientInfoList);
+            if (!inputCorrect) {
+                System.out.println("This account does not exist, please try again.");
+            }
+        }
+
+        inputCorrect = false;
+
+        while (!inputCorrect) {
+            try {
+                System.out.println("Please enter the amount of money you would like to add to the chosen account: ");
+                userAmountOfMoneyInput = Integer.parseInt(scanUserInput.nextLine());
+                inputCorrect = true;
+
+                m_Engine.addMoneyToAccount(userAccountInputString, userAmountOfMoneyInput);
+                System.out.println("Money was added successfully. Current Account Balance is: " + m_Engine.clientInformationByName(userAccountInputString).getClientBalance());
+
+            } catch (NumberFormatException numberFormatEx) {
+                System.out.println("Invalid input - Should be numbers only.");
+            }
+            catch (Exception ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+    }
+
+    private boolean isUserInputExist(String userAccountInputString, List<ClientInformationDTO> clientInfoList) {
+        for (ClientInformationDTO clientDTO : clientInfoList) {
+            if (clientDTO.getClientName().equals(userAccountInputString)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void printClientsNameAndBalance(List<ClientInformationDTO> clientInfoList) {
+        int counter = 1;
         for (ClientInformationDTO clientDTO: clientInfoList) {
             System.out.println(counter++ + ")" + clientDTO.getClientName() + ", " + clientDTO.getClientBalance());
         }
-        counter = 1;
-        //TODO: back
-//        System.out.println(counter++ + ") Back");
-
-        String userAccountInputString;
-        int userAccountInput, userAmountOfMoneyInput;
-        Scanner scanUserInput = new Scanner(System.in);
-        userAccountInputString = scanUserInput.next();
-
-//        userInputString = scanUserInput.next();
-//        userInputInt = isValidInput(userInputString, 8, 1);
-
-/*        if (!isValidNameInput(userAccountInputString)) {
-            System.out.println("Please enter a valid account name.");
-        }//try catch*/
-
-        //TODO: try catch
-        System.out.println("Please enter the amount of money you would like to add to the chosen account: ");
-        userAmountOfMoneyInput = scanUserInput.nextInt();
-
-        m_Engine.addMoneyToAccount(userAccountInputString, userAmountOfMoneyInput);
-        System.out.println("Money was added successfully. Current Account Balance is: " + m_Engine.clientInformationByName(userAccountInputString).getClientBalance());
     }
 
     private boolean isValidNameInput(String userAccountInputString) {

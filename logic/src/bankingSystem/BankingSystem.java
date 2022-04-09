@@ -327,12 +327,12 @@ public class BankingSystem implements LogicInterface {
         return m_LoanCategoryList;
     }
 
-    public List<LoanInformationDTO> optionsForLoans(String clientName, String categories, int amountOfMoneyToInvest,
+    public List<LoanInformationDTO> optionsForLoans(String clientName, List<String> chosenCategories, int amountOfMoneyToInvest,
                                                    int interest, int minimumTotalTimeunits) throws Exception {
         List<LoanInformationDTO> optionLoansSet = new ArrayList<>();
-        BankAccount investClient = findBankAccountByName(clientName);
+        BankAccount investClient = findBankAccountByName(clientName);/*
         List<String> chosenCategories = new ArrayList<>();
-        fillChosenCategoriesList(chosenCategories, categories);
+        fillChosenCategoriesList(chosenCategories, categories)*/;
 
         try {
             if (amountOfMoneyToInvest > investClient.getAccountBalance()) {
@@ -359,7 +359,7 @@ public class BankingSystem implements LogicInterface {
         return optionLoansSet;
     }
 
-    private void fillChosenCategoriesList(List<String> chosenCategories, String categories) {
+    public void fillChosenCategoriesList(List<String> chosenCategories, String categories) throws Exception {
         if (!categories.equals("0")) {
             StringTokenizer numbers = new StringTokenizer(categories);
             while (numbers.hasMoreTokens()) {
@@ -368,8 +368,11 @@ public class BankingSystem implements LogicInterface {
         }
     }
 
-    private String findCategoryByNumberString(String numberAsString) {
+    private String findCategoryByNumberString(String numberAsString) throws Exception {
         int numberInInt = Integer.parseInt(numberAsString);
+        if (numberInInt > m_LoanCategoryList.size() || numberInInt < 0) {
+            throw new Exception("There are no categories for the number: "+ numberInInt);
+        }
         Iterator<String> categoryIterator = m_LoanCategoryList.iterator();
         for (int i = 0; i < numberInInt - 1; i++) {
             categoryIterator.next();
