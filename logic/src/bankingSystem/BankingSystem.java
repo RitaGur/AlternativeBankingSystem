@@ -8,10 +8,8 @@ import bankingSystem.timeline.bankAccount.BankAccount;
 import bankingSystem.timeline.bankClient.BankClient;
 import bankingSystem.timeline.loan.Loan;
 import bankingSystem.timeline.loan.LoanStatus;
-import org.omg.IOP.CodecPackage.FormatMismatch;
 
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -118,57 +116,86 @@ public class BankingSystem implements LogicInterface {
 
     @Override
     public void readFromFile(String fileName) throws Exception {
-        try {
-            File file;
-            file = new File(fileName);
-            if (!file.exists()) {
-                throw new FileNotFoundException();
-            }
-            if (!fileName.endsWith(".xml")) {
-                throw new Exception();
-            }
-            JAXBContext jaxbContext = JAXBContext.newInstance(AbsDescriptor.class);
-            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-            AbsDescriptor descriptor = (AbsDescriptor) jaxbUnmarshaller.unmarshal(file);
+        File file;
+        file = new File(fileName);
 
-            // Categories:
-            List<String> categoriesList = descriptor.getAbsCategories().getAbsCategory();
-            fromListToSetCategories(categoriesList); //filling m_LoanCategoryList
-
-            // BankClients:
-            fillBankClientsList(descriptor.getAbsCustomers().getAbsCustomer());
-
-            // Loans:
-            fillLoanList(descriptor.getAbsLoans().getAbsLoan());
-
-            // Timeunit:
-            m_CurrentTimeUnit.setCurrentTimeUnit();
-
-        } catch (JAXBException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            throw e;
+        if (!file.exists()) {
+            throw new FileNotFoundException();
         }
+        if (!fileName.endsWith(".xml")) {
+            throw new Exception("The file is not an xml file.");
+        }
+
+        JAXBContext jaxbContext = JAXBContext.newInstance(AbsDescriptor.class);
+        Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+        AbsDescriptor descriptor = (AbsDescriptor) jaxbUnmarshaller.unmarshal(file);
+
+        // Categories:
+        List<String> categoriesList = descriptor.getAbsCategories().getAbsCategory();
+        fromListToSetCategories(categoriesList); //filling m_LoanCategoryList
+
+        // BankClients:
+        fillBankClientsList(descriptor.getAbsCustomers().getAbsCustomer());
+
+        // Loans:
+        fillLoanList(descriptor.getAbsLoans().getAbsLoan());
+
+        // Timeunit:
+        m_CurrentTimeUnit.setCurrentTimeUnit();
     }
 
     private void fillLoanList(List<AbsLoan> absLoan) throws Exception {
         m_LoanList = new ArrayList<>();
         for (AbsLoan i_Loan : absLoan) {
+            if (i_Loan.getAbsTotalYazTime() % i_Loan.getAbsPaysEveryYaz() != 0) {
+                throw new Exception("The division between totalYazNumber to paysEveryYaz is not an integer.");
+            }
+            if ( i_Loan.getAbsTotalYazTime() < i_Loan.getAbsPaysEveryYaz()) {
+               throw new Exception("paysEveryYaz is bigger than totalYazTime.");
+            }
+            if(checkIfLoanExist(m_LoanList, i_Loan.getId())) {
+                throw new Exception("The loan: " + i_Loan.getId() + " already exist.");
+            }
             addLoan(i_Loan.getId(), i_Loan.getAbsOwner(), i_Loan.getAbsCapital(), i_Loan.getAbsTotalYazTime(), i_Loan.getAbsPaysEveryYaz(),
                     i_Loan.getAbsIntristPerPayment(), i_Loan.getAbsCategory());
         }
     }
 
-    private void fillBankClientsList(List<AbsCustomer> absCustomerList) {
+    private void fillBankClientsList(List<AbsCustomer> absCustomerList) throws Exception {
         m_BankAccountList = new ArrayList<>();
         for (AbsCustomer i_Customer : absCustomerList) {
+            if (checkIfClientExist(m_BankAccountList, i_Customer.getName())) {
+                throw new Exception("This client " + i_Customer.getName() + " already exist.");
+            }
             m_BankAccountList.add(new BankClient(i_Customer.getAbsBalance(), i_Customer.getName()));
         }
     }
+    //private boolean checkIfLoanOwnerExist()
 
-    private void fromListToSetCategories(List<String> i_ListToConvert) {
+    private boolean checkIfLoanExist(List<Loan> loanList, String loanID) {
+        for (Loan loan : loanList) {
+            if(loan.getLoanNameID().equals(loanID)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean checkIfClientExist(List<BankClient> BankAccountList, String name) {
+        for (BankAccount account : BankAccountList) {
+            if(account.getClientName().equals(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void fromListToSetCategories(List<String> i_ListToConvert) throws Exception {
         m_LoanCategoryList = new ArrayList<>();
         for (String i_CategoryInList : i_ListToConvert) {
+            if (!i_ListToConvert.contains(i_CategoryInList)) {
+                throw new Exception("This category does not exist.");
+            }
             m_LoanCategoryList.add(i_CategoryInList);
         }
     }

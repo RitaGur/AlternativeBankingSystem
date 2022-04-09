@@ -8,6 +8,7 @@ import DTO.loan.PaymentsDTO;
 import bankingSystem.BankingSystem;
 import exception.ValueOutOfRangeException;
 
+import javax.xml.bind.JAXBException;
 import java.io.FileNotFoundException;
 import java.util.*;
 
@@ -532,27 +533,20 @@ public class ConsoleStart {
     }
 
     private void readFromFile() {
+        isFileRead = false;
+        Scanner scanUserInput = new Scanner(System.in);
+        String userInput;
+        System.out.println("Please enter a full path of the XML file you would like to upload: ");
+        userInput = scanUserInput.nextLine();
         try {
-            Scanner scanUserInput = new Scanner(System.in);
-            String userInput;
-            System.out.println("Please enter a full path of the XML file you would like to upload: ");
-            userInput = scanUserInput.next();
-            try {
-                m_Engine.readFromFile(userInput.trim());
-                System.out.println("The file was uploaded successfully!");
-                System.out.println();
-                isFileRead = true;
-            }
-            catch (FileNotFoundException fileNotFoundEx) {
-                System.out.println("The system could not find the file, please check the file path again.");
-            }
-            catch (Exception ex) {
-                System.out.println("The file is not an xml file");
-            }
-
-        }
-        catch (Exception e) {
-            System.out.println(e.getMessage());
+            m_Engine.readFromFile(userInput.trim());
+            System.out.println("The file was uploaded successfully!");
+            System.out.println();
+            isFileRead = true;
+        } catch (FileNotFoundException fileNotFoundEx) {
+            System.out.println("The system could not find the file, please check the file path again.");
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
         }
     }
 
