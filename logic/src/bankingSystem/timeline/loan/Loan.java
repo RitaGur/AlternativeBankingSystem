@@ -53,16 +53,54 @@ public class Loan {
     }
 
     public void addLender(BankClient i_NewLender, int i_AmountOfLoan) {
-        m_LendersAndAmountsSet.add(new PartInLoan(i_NewLender, i_AmountOfLoan, f_LoanStartSum, m_Payment.getSumLeftToPay(), f_SumOfTimeUnit));
-        i_NewLender.addAsLender(this);
+        PartInLoan existingPartOfLender = findPartInLoanByLender(i_NewLender);
+
+        if (existingPartOfLender == null) {
+            m_LendersAndAmountsSet.add(new PartInLoan(i_NewLender, i_AmountOfLoan, f_LoanStartSum, m_Payment.getSumLeftToPay(), f_SumOfTimeUnit, f_TimeUnitsBetweenPayment));
+            i_NewLender.addAsLender(this);
+        }
+        else { //this lender already exist
+            int newAmountOfLoan = i_AmountOfLoan + existingPartOfLender.getAmountOfLoan();
+            m_LendersAndAmountsSet.remove(existingPartOfLender);
+            m_LendersAndAmountsSet.add(new PartInLoan(i_NewLender, newAmountOfLoan, f_LoanStartSum, m_Payment.getSumLeftToPay(), f_SumOfTimeUnit, f_TimeUnitsBetweenPayment));
+        }
     }
 
-    public void addPaymentToPaymentInfoList(int paymentTimeUnit, boolean wasItPaid) {
-        m_PaymentInfoList.add(new PaymentInfo(paymentTimeUnit, m_Payment.getFundToPayNextPayment(), m_Payment.getInterestToPayNextPayment(), (int)m_Payment.getAmountToPayNextPayment(), wasItPaid));
+    private PartInLoan findPartInLoanByLender(BankClient i_newLender) {
+        PartInLoan partToReturn = null;
+
+        for (PartInLoan part : m_LendersAndAmountsSet) {
+            if (part.getLender().getClientName().equals(i_newLender.getClientName())) {
+                partToReturn = part;
+                break;
+            }
+        }
+
+        return partToReturn;
     }
 
-    public void timeUnitPayment() { // as monthly payment
-        m_Payment.addPayment();
+    public void addPaymentToPaymentInfoListInRisk(int paymentTimeUnit, boolean wasItPaid, int howManyPaymentsToPay) {
+        int wasChangedCounter = 0;
+
+        for (PaymentInfo singlePayment : m_PaymentInfoList) {
+            if (!singlePayment.isWasItPaid()) {
+                m_PaymentInfoList.remove(singlePayment);
+                wasChangedCounter++;
+                if (wasChangedCounter == howManyPaymentsToPay){
+                    break;
+                }
+            }
+        }
+        m_PaymentInfoList.add(new PaymentInfo(paymentTimeUnit, m_Payment.getFundToPayEveryTimeUnit()*howManyPaymentsToPay, m_Payment.getInterestToPayEveryTimeUnit()*howManyPaymentsToPay, (int)m_Payment.getSumToPayEveryTimeUnit()*howManyPaymentsToPay, wasItPaid));
+    }
+
+    public void addPaymentToPaymentInfoListActive(int paymentTimeUnit, boolean wasItPaid) {
+        m_PaymentInfoList.removeIf(singlePaymentInfo -> singlePaymentInfo.isWasItPaid() == false);
+        m_PaymentInfoList.add(new PaymentInfo(paymentTimeUnit, m_Payment.getFundToPayEveryTimeUnit(), m_Payment.getInterestToPayEveryTimeUnit(), (int)m_Payment.getSumToPayEveryTimeUnit(), wasItPaid));
+    }
+
+    public void addPaymentToPaymentInfoListFromActiveRisk(int paymentTimeUnit, boolean wasItPaid) {
+        m_PaymentInfoList.add(new PaymentInfo(paymentTimeUnit, m_Payment.getFundToPayEveryTimeUnit(), m_Payment.getInterestToPayEveryTimeUnit(), (int)m_Payment.getSumToPayEveryTimeUnit(), wasItPaid));
     }
 
     public double loanSumLeftToPay() {
@@ -181,42 +219,41 @@ public class Loan {
     }
 
     public boolean isItPaymentTime(int i_CurrentTimeunit) {
-        /*return (((i_CurrentTimeunit - (m_BeginningTimeUnit - 1) % f_TimeUnitsBetweenPayment) == 0 &&
-                (i_CurrentTimeunit - m_BeginningTimeUnit > 0)) || (f_TimeUnitsBetweenPayment == 1)) &&
-                (m_LoanStatus == LoanStatus.ACTIVE || m_LoanStatus == LoanStatus.RISK);*/
-
         return (((i_CurrentTimeunit - (m_BeginningTimeUnit - 1)) % f_TimeUnitsBetweenPayment) == 0 &&
                 (m_LoanStatus == LoanStatus.ACTIVE || m_LoanStatus == LoanStatus.RISK));
     }
 
-    private void payForLoan(int i_CurrentTimeunit) throws Exception {
-        m_Payment.addPayment();
-        addPaymentToPaymentInfoList(i_CurrentTimeunit, true);
-        m_LastPaidTimeUnit = i_CurrentTimeunit;
-        takePaymentsFromBorrowerToLenders(i_CurrentTimeunit);
-    }
-
     public void checkIfPaymentNeededAndPay(int i_CurrentTimeUnit) throws Exception {
         if(isItPaymentTime(i_CurrentTimeUnit)) {
-            if (f_LoanOwner.getAccountBalance() >= m_Payment.getAmountToPayNextPayment()) {
-                m_Payment.addPayment();
-                addPaymentToPaymentInfoList(i_CurrentTimeUnit, true);
-                m_LastPaidTimeUnit = i_CurrentTimeUnit;
-                takePaymentsFromBorrowerToLenders(i_CurrentTimeUnit);
-                if (m_LoanStatus == LoanStatus.RISK) { // In case the lender paid all his last debt
-                    m_LoanStatus = LoanStatus.ACTIVE;
-                    m_Payment.updateNextPaymentActiveAgain();
-                    updateNextPaymentsOfLendersActiveAgain();
+            if (f_LoanOwner.getAccountBalance() >= m_Payment.getSumToPayEveryTimeUnit()) {
+                if (m_LoanStatus == LoanStatus.RISK) { // loan is in RISK mode
+                    int howManyPaymentsCanTheBorrowerPayInRisk = (int) (f_LoanOwner.getAccountBalance() / m_Payment.getSumToPayEveryTimeUnit());
+                    // al least == 1
+                    if (howManyPaymentsCanTheBorrowerPayInRisk > howManyUnpaidPayments() + 1) { // +1 for this timeunit payment
+                        howManyPaymentsCanTheBorrowerPayInRisk = howManyUnpaidPayments() + 1;
+                    }
+                    if (howManyPaymentsCanTheBorrowerPayInRisk == howManyUnpaidPayments() + 1) {
+                        m_LoanStatus = LoanStatus.ACTIVE;
+                        m_Payment.updateNextPaymentActiveAgain();
+                        updateNextPaymentsOfLendersActiveAgain();
+                    }
+                    m_Payment.addPayment(howManyPaymentsCanTheBorrowerPayInRisk);
+                    addPaymentToPaymentInfoListInRisk(i_CurrentTimeUnit, true, howManyPaymentsCanTheBorrowerPayInRisk);
+                    m_LastPaidTimeUnit = i_CurrentTimeUnit;
+                    takePaymentsFromBorrowerToLenders(i_CurrentTimeUnit, howManyPaymentsCanTheBorrowerPayInRisk);
+                } else { // active stays in active
+                    m_Payment.addPayment(1);
+                    addPaymentToPaymentInfoListActive(i_CurrentTimeUnit, true);
+                    m_LastPaidTimeUnit = i_CurrentTimeUnit;
+                    takePaymentsFromBorrowerToLenders(i_CurrentTimeUnit, 1);
                 }
                 checkIfLoanIsFinished(i_CurrentTimeUnit); // can be finished even in RISK
-            } else {
+            } else { //from active to risk
                 m_LoanStatus = LoanStatus.RISK;
-                addPaymentToPaymentInfoList(i_CurrentTimeUnit, false);
+                addPaymentToPaymentInfoListFromActiveRisk(i_CurrentTimeUnit, false);
                 m_Payment.updateNextPaymentRisk();
                 updateNextPaymentsOfLendersRisk();
-                throw new Exception("Loan owner does not have enough money to pay his payment.");
             }
-
         }
     }
 
@@ -239,14 +276,10 @@ public class Loan {
         }
     }
 
-    public boolean canTheBorrowerPayForLoanThisTimeunit() {
-        return f_LoanOwner.getAccountBalance() >= m_Payment.getAmountToPayNextPayment();
-    }
-
-    private void takePaymentsFromBorrowerToLenders(int i_currentTimeUnit) throws Exception {
+    private void takePaymentsFromBorrowerToLenders(int i_currentTimeUnit, int i_HowManyPayments) throws Exception {
         for (PartInLoan lenderPart : m_LendersAndAmountsSet) {
-            lenderPart.getLender().addMoneyToAccount(lenderPart.getAmountToReceiveNextPayment(), i_currentTimeUnit);
-            f_LoanOwner.withdrawMoneyFromAccount(lenderPart.getAmountToReceiveNextPayment(), i_currentTimeUnit);
+            lenderPart.getLender().addMoneyToAccount(lenderPart.getAmountToReceiveEveryTimeUnit()*i_HowManyPayments, i_currentTimeUnit);
+            f_LoanOwner.withdrawMoneyFromAccount(lenderPart.getAmountToReceiveEveryTimeUnit()*i_HowManyPayments, i_currentTimeUnit);
         }
         //what if he does not have enough money - we come here after we chose to pay this loan with knowing he has the money
     }

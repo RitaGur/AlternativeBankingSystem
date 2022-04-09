@@ -7,6 +7,8 @@ import DTO.loan.PartInLoanDTO;
 import DTO.loan.PaymentsDTO;
 import bankingSystem.BankingSystem;
 import exception.ValueOutOfRangeException;
+
+import java.io.FileNotFoundException;
 import java.util.*;
 
 public class ConsoleStart {
@@ -20,13 +22,12 @@ public class ConsoleStart {
         m_Engine = new BankingSystem();
         isFileRead = false;
     }
-    //TODO: delete throws Exception!!
-    public void run() throws Exception {
+
+    public void run(){
         startService();
     }
 
-    //TODO: delete throws Exception!!
-    private void startService() throws Exception {
+    private void startService(){
         showMenu();
         String userInputString;
         int userInputInt = 0;
@@ -132,7 +133,7 @@ public class ConsoleStart {
         printCategoriesMessageAndLoanCategories();
         categories = scanUserInput.nextLine();
 
-        System.out.println("Please fill the minimum interest you would like to get (decimal number bigger between 0-100): ");
+        System.out.println("Please fill the minimum interest you would like to get (Integer between 0-100): ");
         System.out.println("In case you choose 0, the system would offer you any loan, regardless it's interest.");
         interest = Integer.parseInt(scanUserInput.nextLine());
 
@@ -214,7 +215,7 @@ public class ConsoleStart {
         System.out.println("Please choose the account you would like to withdraw money from(enter full name): ");
 
         for (ClientInformationDTO clientDTO: clientInfoList) {
-            System.out.println(counter++ + ")" + clientDTO.getClientName());
+            System.out.println(counter++ + ")" + clientDTO.getClientName() + ", " + clientDTO.getClientBalance());
         }
         counter = 1;
 
@@ -237,7 +238,7 @@ public class ConsoleStart {
         System.out.println("Please choose the account you would like to add money to(enter full name): ");
 
         for (ClientInformationDTO clientDTO: clientInfoList) {
-            System.out.println(counter++ + ")" + clientDTO.getClientName());
+            System.out.println(counter++ + ")" + clientDTO.getClientName() + ", " + clientDTO.getClientBalance());
         }
         counter = 1;
         //TODO: back
@@ -377,7 +378,10 @@ public class ConsoleStart {
 
     private String clientLoanRiskStatus(LoanInformationDTO singleLoanInformation) {
         String stringToReturn = "";
-        //Todo: complete
+
+        stringToReturn += "Number of unpaid payments: " + singleLoanInformation.getNumberOfUnpaidPayments() + "\n";
+        stringToReturn += "Sum of unpaid payments: " + singleLoanInformation.amountOfUnPaidPayments();
+
         return stringToReturn;
     }
 
@@ -454,16 +458,15 @@ public class ConsoleStart {
 
     private String riskStatus(LoanInformationDTO singleLoanInformation) {
         String stringToReturn = activeStatus(singleLoanInformation);
-        stringToReturn += loanPaymentsString(singleLoanInformation);
         stringToReturn += "Number of unpaid payments: " + singleLoanInformation.getNumberOfUnpaidPayments() + "\n";
-        stringToReturn += "Sum of unpaid payments: " + singleLoanInformation.getAmountToPayNextPayment() + "\n";
+        stringToReturn += "Sum of unpaid payments: " + (singleLoanInformation.getSumAmountToPayEveryTimeUnit() * singleLoanInformation.getNumberOfUnpaidPayments()) + "\n";
         return stringToReturn;
     }
 
     private String activeStatus(LoanInformationDTO singleLoanInformation) {
         String stringToReturn = lendersPartInLoanString(singleLoanInformation);
         stringToReturn += "Beginning Timeunit: " + singleLoanInformation.getBeginningTimeUnit() + "\n";
-        stringToReturn += "Next Payment Timeunit: " + (singleLoanInformation.getLastPaymentTimeunit() + singleLoanInformation.getTimeUnitsBetweenPayments()) + "\n"; //TODO: check if correct
+        stringToReturn += "Next Payment Timeunit: " + calculateNextPaymentUnit(singleLoanInformation) + "\n";
         stringToReturn += loanPaymentsString(singleLoanInformation);
         stringToReturn += "Paid Fund Amount: " + singleLoanInformation.getPaidFund() + "\n";
         stringToReturn += "Paid Interest Amount: " + singleLoanInformation.getPaidInterest() + "\n";
@@ -471,6 +474,15 @@ public class ConsoleStart {
         stringToReturn += "Interest Left To Pay Amount: " + singleLoanInformation.getInterestLeftToPay() + "\n";
 
         return stringToReturn;
+    }
+
+    private int calculateNextPaymentUnit(LoanInformationDTO singleLoanInformation) {
+        if (singleLoanInformation.getLastPaymentTimeunit() == 0) {
+            return singleLoanInformation.getBeginningTimeUnit() - 1 + singleLoanInformation.getTimeUnitsBetweenPayments();
+        }
+        else {
+            return singleLoanInformation.getLastPaymentTimeunit() + singleLoanInformation.getTimeUnitsBetweenPayments();
+        }
     }
 
     private String loanPaymentsString(LoanInformationDTO singleLoanInformation) {
@@ -484,11 +496,12 @@ public class ConsoleStart {
             stringToReturn += "Fund Amount: " + singleLoanPayment.getFundPayment()+ "\n";
             stringToReturn += "Interest Amount: " + singleLoanPayment.getInterestPayment() + "\n";
             stringToReturn += "Sum Amount(Fund + Interest): " + singleLoanPayment.getPaymentSum() + "\n";
-            if (singleLoanInformation.getLoanStatus().toString().equals("RISK")) {
+            if (singleLoanInformation.getLoanStatus().equals("RISK")) {
                 if (singleLoanPayment.isWasItPaid() == false) {
                     stringToReturn += "NOT PAID!\n";
                 }
             }
+
         }
         stringToReturn += "*****End of Payment Details*****\n";
         return stringToReturn;
@@ -524,15 +537,19 @@ public class ConsoleStart {
             String userInput;
             System.out.println("Please enter a full path of the XML file you would like to upload: ");
             userInput = scanUserInput.next();
-            m_Engine.readFromFile(userInput);
-            System.out.println("The file was uploaded successfully!");
-            System.out.println();
-            isFileRead = true;
+            try {
+                m_Engine.readFromFile(userInput.trim());
+                System.out.println("The file was uploaded successfully!");
+                System.out.println();
+                isFileRead = true;
+            }
+            catch (FileNotFoundException fileNotFoundEx) {
+                System.out.println("The system could not find the file, please check the file path again.");
+            }
+            catch (Exception ex) {
+                System.out.println("The file is not an xml file");
+            }
 
-            //TODO: delete!!
-            //FOR TESTS
-            m_Engine.addLoan("Test","Avrum", 2000, 12,1,5,"Renovate");
-            //FOR TESTS
         }
         catch (Exception e) {
             System.out.println(e.getMessage());

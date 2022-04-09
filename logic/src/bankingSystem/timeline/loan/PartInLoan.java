@@ -8,11 +8,11 @@ public class PartInLoan {
     private final double m_AmountToReceiveEveryTimeUnit;
     private double m_AmountToReceiveNextPayment;
 
-    public PartInLoan(BankAccount i_Lender, int i_AmountOfLoan, int i_LoanStartSum, double i_TotalReturnSumOfLoan, int i_SumOfTimeUnit) { // i_TotalReturnSumOfLoan = fund + interest
+    public PartInLoan(BankAccount i_Lender, int i_AmountOfLoan, int i_LoanStartSum, double i_TotalReturnSumOfLoan, int i_SumOfTimeUnit, int i_TimeunitsBetweenPayments) { // i_TotalReturnSumOfLoan = fund + interest
         this.m_Lender = i_Lender;
         this.m_AmountOfLoan = i_AmountOfLoan;
-        double amountPercentageOfLoan = (i_AmountOfLoan * 100 / i_LoanStartSum) / 100; // /100 for %
-        m_AmountToReceiveEveryTimeUnit = (amountPercentageOfLoan * i_TotalReturnSumOfLoan) / i_SumOfTimeUnit;
+        double amountPercentageOfLoan = (double) (i_AmountOfLoan * 100 / i_LoanStartSum) / (double)100; // /100 for %
+        m_AmountToReceiveEveryTimeUnit = (amountPercentageOfLoan * i_TotalReturnSumOfLoan) / (i_SumOfTimeUnit / i_TimeunitsBetweenPayments);
         m_AmountToReceiveNextPayment = m_AmountToReceiveEveryTimeUnit;
     }
 

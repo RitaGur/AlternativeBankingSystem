@@ -8,11 +8,13 @@ import bankingSystem.timeline.bankAccount.BankAccount;
 import bankingSystem.timeline.bankClient.BankClient;
 import bankingSystem.timeline.loan.Loan;
 import bankingSystem.timeline.loan.LoanStatus;
+import org.omg.IOP.CodecPackage.FormatMismatch;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.*;
 
 public class BankingSystem implements LogicInterface {
@@ -63,7 +65,7 @@ public class BankingSystem implements LogicInterface {
         for (BankClient client : m_BankAccountList) {
             ArrayList<Loan> loansNeedToBePaidThisTimeunitList = whichLoansNeedToPayListByBorrower(client);
             if (loansNeedToBePaidThisTimeunitList.size() == 0) {
-                break;
+                continue;
             }
 
             // sort by yaz
@@ -119,6 +121,12 @@ public class BankingSystem implements LogicInterface {
         try {
             File file;
             file = new File(fileName);
+            if (!file.exists()) {
+                throw new FileNotFoundException();
+            }
+            if (!fileName.endsWith(".xml")) {
+                throw new Exception();
+            }
             JAXBContext jaxbContext = JAXBContext.newInstance(AbsDescriptor.class);
             Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
             AbsDescriptor descriptor = (AbsDescriptor) jaxbUnmarshaller.unmarshal(file);
@@ -133,6 +141,8 @@ public class BankingSystem implements LogicInterface {
             // Loans:
             fillLoanList(descriptor.getAbsLoans().getAbsLoan());
 
+            // Timeunit:
+            m_CurrentTimeUnit.setCurrentTimeUnit();
 
         } catch (JAXBException e) {
             e.printStackTrace();
@@ -194,7 +204,7 @@ public class BankingSystem implements LogicInterface {
     @Override
     public void withdrawMoneyFromAccount(String i_ClientAccount, int i_AmountToReduce) throws Exception {
         BankAccount accountToReduceMoney = findBankAccountByName(i_ClientAccount);
-        accountToReduceMoney.addLastTransaction(i_AmountToReduce * (-1), m_CurrentTimeUnit.getCurrentTimeUnit());
+        accountToReduceMoney.withdrawMoneyFromAccount(i_AmountToReduce, m_CurrentTimeUnit.getCurrentTimeUnit());
     }
 
     @Override

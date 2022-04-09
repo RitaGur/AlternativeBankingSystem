@@ -6,6 +6,8 @@ import bankingSystem.timeline.loan.Loan;
 
 import java.util.*;
 
+import static java.lang.Math.round;
+
 public class BankClient implements BankAccount {
     private final String f_ClientName;
     private double m_AccountBalance;
@@ -33,12 +35,14 @@ public class BankClient implements BankAccount {
 
     @Override
     public void addMoneyToAccount(double i_AmountToAdd, int i_TransactionTimeUnit) {
+        i_AmountToAdd = i_AmountToAdd;
         m_RecentTransactionList.add(new RecentTransaction(i_AmountToAdd, m_AccountBalance, i_TransactionTimeUnit));
         m_AccountBalance += i_AmountToAdd;
     }
 
     @Override
     public void withdrawMoneyFromAccount(double i_AmountToWithdraw, int i_TransactionTimeUnit) throws Exception {
+        i_AmountToWithdraw = i_AmountToWithdraw;
         if (i_AmountToWithdraw > m_AccountBalance) {
             throw new Exception("The client does not have enough money in the account.");
         }

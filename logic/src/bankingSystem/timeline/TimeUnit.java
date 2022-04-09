@@ -11,6 +11,10 @@ public class TimeUnit {
         return m_CurrentTimeUnit;
     }
 
+    public void setCurrentTimeUnit() {
+       m_CurrentTimeUnit = 1;
+    }
+
     public static void addOneToTimeUnit() {
         m_CurrentTimeUnit++;
     }

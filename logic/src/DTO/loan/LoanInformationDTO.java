@@ -1,5 +1,7 @@
 package DTO.loan;
 
+import bankingSystem.timeline.bankAccount.BankAccount;
+import bankingSystem.timeline.bankClient.BankClient;
 import bankingSystem.timeline.loan.Loan;
 import bankingSystem.timeline.loan.PartInLoan;
 import bankingSystem.timeline.loan.PaymentInfo;
@@ -193,5 +195,21 @@ public class LoanInformationDTO {
 
     public int getNumberOfUnpaidPayments() {
         return numberOfUnpaidPayments;
+    }
+
+    /*public int amountOfLenderPartInLoan(BankAccount borrower) {
+
+    }*/
+
+    public double amountOfUnPaidPayments() {
+        int sum = 0;
+
+        for (PaymentsDTO singlePayment : paymentsListInDTO) {
+            if (singlePayment.isWasItPaid() == false) {
+                sum += singlePayment.getPaymentSum();
+            }
+        }
+
+        return sum;
     }
 }

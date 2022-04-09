@@ -25,20 +25,27 @@ public class Payment {
         m_AmountToPayNextPayment = m_InterestToPayNextPayment + m_FundToPayNextPayment;
     }
 
-    public void addPayment() {
+    public void addPayment(int howManyPaymentsToPay) {
+        m_FundLeftToPay -= f_FundToPayEveryTimeUnit * howManyPaymentsToPay;
+        m_InterestLeftToPay -= f_InterestToPayEveryTimeUnit * howManyPaymentsToPay;
+        m_SumLeftToPay = m_FundLeftToPay + m_InterestLeftToPay;
+    }
+
+    /*public void addPayment() {
         m_FundLeftToPay -= m_FundToPayNextPayment;
         m_InterestLeftToPay -= m_InterestToPayNextPayment;
-    }
+        m_SumLeftToPay = m_FundLeftToPay + m_InterestLeftToPay;
+    }*/
 
     public void updateNextPaymentActiveAgain() {
         m_FundToPayNextPayment = f_FundToPayEveryTimeUnit;
-        m_InterestLeftToPay = f_InterestToPayEveryTimeUnit;
+        m_InterestToPayNextPayment = f_InterestToPayEveryTimeUnit;
         m_AmountToPayNextPayment = m_FundToPayNextPayment + m_InterestToPayNextPayment;
     }
 
     public void updateNextPaymentRisk() {
         m_FundToPayNextPayment += f_FundToPayEveryTimeUnit;
-        m_InterestLeftToPay += f_InterestToPayEveryTimeUnit;
+        m_InterestToPayNextPayment += f_InterestToPayEveryTimeUnit;
         m_AmountToPayNextPayment = m_FundToPayNextPayment + m_InterestToPayNextPayment;
     }
 
