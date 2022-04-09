@@ -1,7 +1,5 @@
 package DTO.loan;
 
-import bankingSystem.timeline.bankAccount.BankAccount;
-import bankingSystem.timeline.bankClient.BankClient;
 import bankingSystem.timeline.loan.Loan;
 import bankingSystem.timeline.loan.PartInLoan;
 import bankingSystem.timeline.loan.PaymentInfo;

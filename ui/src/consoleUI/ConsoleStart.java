@@ -6,10 +6,7 @@ import DTO.loan.LoanInformationDTO;
 import DTO.loan.PartInLoanDTO;
 import DTO.loan.PaymentsDTO;
 import bankingSystem.BankingSystem;
-import com.sun.xml.internal.ws.api.message.ExceptionHasMessage;
 import exception.ValueOutOfRangeException;
-
-import javax.xml.bind.JAXBException;
 import java.io.FileNotFoundException;
 import java.util.*;
 
@@ -129,7 +126,7 @@ public class ConsoleStart {
         while (!userInputCorrect) {
             System.out.println("Please choose the account you would like to add an investment to (enter full name):");
             printClientsNameAndAmount();
-            userAccountInputString = scanUserInput.nextLine(); //TODO: checkValidation
+            userAccountInputString = scanUserInput.nextLine();
             userInputCorrect = isUserInputExist(userAccountInputString.trim(), clientInfoList);
             if (!userInputCorrect) {
                 System.out.println("This account does not exist, please try again.");
@@ -234,7 +231,6 @@ public class ConsoleStart {
                 System.out.println(ex.getMessage());
             }
         }
-
     }
 
     private boolean checkUserInputInvestmentAmount(int amountOfMoneyToInvest, String clientNName) {
@@ -281,7 +277,7 @@ public class ConsoleStart {
 
     private void printCategoriesMessageAndLoanCategories() {
         System.out.println("Please choose categories for your investment:");
-        System.out.println("You can choose as many as you prefer, or none. For example: 1 2 3 / 0");//TODO: check the format
+        System.out.println("You can choose as many as you prefer, or none. For example: 1 2 3 / 0");
         System.out.println("In case you don't choose any category, the system would offer you any loan, regardless it's category. ");
         int counter = 1;
 
@@ -671,7 +667,11 @@ public class ConsoleStart {
             isFileRead = true;
         } catch (FileNotFoundException fileNotFoundEx) {
             System.out.println("The system could not find the file, please check the file path again.");
-        } catch (Exception ex) {
+        }/*
+        catch (JAXBException e) {
+            System.out.println(e.getMessage());
+        }*/
+         catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
     }
